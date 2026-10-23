@@ -79,7 +79,7 @@ class AnthropicAdapter(Adapter):
 
     def parse_stream(self, lines):
         blocks, stop = {}, 'end'
-        for event, data in sse(lines):
+        for _event, data in sse(lines):
             try:
                 ev = json.loads(data)
             except ValueError:

@@ -1,5 +1,5 @@
 """Serveur : sert le site (dossier ou proxy), y ajoute la barre à la volée, et expose l'API /__lq/."""
-import hmac, http.client, http.server, json, os, re, secrets, shutil, socket, socketserver, threading, time, traceback
+import hmac, http.client, http.server, json, os, re, secrets, socket, socketserver, threading, time, traceback
 import urllib.parse
 
 from . import adapters, agent
@@ -32,6 +32,7 @@ class Reloader:
     def __init__(self, project, watch=True):
         self.project, self.gen, self.cond = project, 0, threading.Condition()
         self.paused = False
+        self.alive = True
         if watch:
             threading.Thread(target=self._watch, daemon=True).start()
 
@@ -58,12 +59,16 @@ class Reloader:
 
     def _watch(self):
         last = self._state()
-        while True:
+        while self.alive:
             time.sleep(0.5)
             now = self._state()
             if now != last and not self.paused:   # pendant une demande, c'est la fin de la demande qui recharge
                 self.bump()
             last = now
+
+    def stop(self):
+        self.alive = False
+        self.bump()
 
     def wait(self, gen, timeout=15):
         with self.cond:
@@ -73,20 +78,28 @@ class Reloader:
 
 
 class App:
-    def __init__(self, root, port, proxy=None, config=None, transport=None):
-        self.project = Project(root)
+    """Un site servi avec la barre (root donné), ou le tableau de bord des sites (root=None)."""
+
+    def __init__(self, root, port, proxy=None, config=None, transport=None, hub_url=None):
         self.port = port
-        self.proxy = urllib.parse.urlsplit(proxy) if proxy else None
-        self.mode = 'proxy' if proxy else 'static'
         self.config = config or Config()
         self.token = secrets.token_urlsafe(24)
-        self.history = HistoryStore(self.project)
-        self.conversation = Conversation(self.project)
         self.transport = transport or Transport()
-        self.reloader = Reloader(self.project, watch=not proxy)
+        self.hub_url = hub_url
         self.job = None
         self.jobs = {}
         self.lock = threading.Lock()
+        self.proxy = urllib.parse.urlsplit(proxy) if proxy else None
+        if root is None:
+            self.project = None
+            self.mode = 'hub'
+            self.sites = Sites(self)
+            return
+        self.project = Project(root)
+        self.mode = 'proxy' if proxy else 'static'
+        self.history = HistoryStore(self.project)
+        self.conversation = Conversation(self.project)
+        self.reloader = Reloader(self.project, watch=not proxy)
 
     @property
     def origin_hosts(self):
@@ -246,6 +259,130 @@ class App:
                 'cli': {k: bool(v) for k, v in detect_cli().items()}, 'env': envs}
 
 
+class Sites:
+    """Sites du tableau de bord : chacun a son propre serveur et son propre port, donc sa propre origine."""
+
+    def __init__(self, hub):
+        self.hub, self.running, self.lock = hub, {}, threading.Lock()
+
+    @property
+    def url(self):
+        return f'http://127.0.0.1:{self.hub.port}/'
+
+    def clean(self, body, sid=None):
+        root = os.path.realpath(os.path.expanduser(str(body.get('root') or '').strip()))
+        if not body.get('root') or not os.path.isdir(root):
+            raise ValueError('dossier introuvable')
+        if root in ('/', os.path.realpath(os.path.expanduser('~'))):
+            raise ValueError('choisis le dossier du projet, pas la racine ni ton dossier personnel')
+        proxy = str(body.get('proxy') or '').strip()
+        if proxy:
+            if not proxy.startswith(('http://', 'https://')):
+                proxy = 'http://' + proxy
+            u = urllib.parse.urlsplit(proxy)
+            if not u.hostname:
+                raise ValueError('URL du serveur de dev invalide')
+        name = str(body.get('name') or '').strip()[:80] or os.path.basename(root)
+        for other in self.hub.config.sites():
+            if other['id'] != sid and other['root'] == root:
+                raise ValueError(f'ce dossier est déjà le site « {other["name"]} »')
+        return {'name': name, 'root': root, 'proxy': proxy}
+
+    def save(self, body):
+        sid = str(body.get('id') or '')
+        old = self.hub.config.get_site(sid) if sid else None
+        site = self.clean(body, sid if old else None)
+        if old:
+            site = dict(old, **site)
+            changed = (old['root'], old.get('proxy')) != (site['root'], site.get('proxy'))
+        else:
+            site['id'] = secrets.token_hex(4)
+            changed = False
+        self.hub.config.upsert_site(site)
+        if changed and site['id'] in self.running:
+            self.stop(site['id'])
+            self.start(site['id'])
+        return site
+
+    def ensure(self, root, proxy=None):
+        """livequill ./dossier : ajoute le site s'il n'existe pas encore."""
+        root = os.path.realpath(root)
+        for s in self.hub.config.sites():
+            if s['root'] == root:
+                if (proxy or '') != (s.get('proxy') or ''):
+                    return self.save(dict(s, proxy=proxy or ''))['id']
+                return s['id']
+        return self.save({'root': root, 'proxy': proxy or ''})['id']
+
+    def start(self, sid):
+        with self.lock:
+            if sid in self.running:
+                return self.running[sid][0].port
+            site = self.hub.config.get_site(sid)
+            if not site:
+                raise ValueError('site inconnu')
+            if not os.path.isdir(site['root']):
+                raise ValueError(f'dossier introuvable : {site["root"]}')
+            app = App(site['root'], site.get('port') or self.hub.port + 1, proxy=site.get('proxy') or None,
+                      config=self.hub.config, transport=self.hub.transport, hub_url=self.url)
+            srv = make_server(app, port_tries=50)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            self.running[sid] = (app, srv)
+        if site.get('port') != app.port:      # port stable : la barre garde ses préférences (localStorage par origine)
+            self.hub.config.upsert_site(dict(site, port=app.port))
+        return app.port
+
+    def stop(self, sid):
+        with self.lock:
+            app, srv = self.running.pop(sid, (None, None))
+        if srv:
+            if app.job and not app.job.done:
+                app.job.cancel()
+            app.reloader.stop()
+            srv.shutdown()
+            srv.server_close()
+
+    def remove(self, sid):
+        self.stop(sid)
+        self.hub.config.remove_site(sid)
+
+    def stop_all(self):
+        for sid in list(self.running):
+            self.stop(sid)
+
+    def public(self):
+        home = os.path.realpath(os.path.expanduser('~'))
+        out = []
+        for s in self.hub.config.sites():
+            app = self.running.get(s['id'], (None,))[0]
+            root = s['root']
+            out.append({'id': s['id'], 'name': s['name'], 'root': root, 'proxy': s.get('proxy') or '',
+                        'display': '~' + root[len(home):] if root == home or root.startswith(home + os.sep) else root,
+                        'exists': os.path.isdir(root), 'running': bool(app),
+                        'url': f'http://127.0.0.1:{app.port}/' if app else None,
+                        'busy': bool(app and app.job and not app.job.done)})
+        return out
+
+
+def browse(path):
+    """Sous-dossiers d'un dossier, pour choisir un projet depuis le tableau de bord (noms seulement)."""
+    path = os.path.realpath(os.path.expanduser(path or '~'))
+    if not os.path.isdir(path):
+        raise ValueError('dossier introuvable')
+    dirs = []
+    try:
+        for e in sorted(os.scandir(path), key=lambda e: e.name.lower()):
+            if e.is_dir() and not e.name.startswith('.') and e.name not in ('node_modules', '__pycache__'):
+                dirs.append(e.name)
+    except PermissionError:
+        pass
+    names = set(os.listdir(path)) if os.access(path, os.R_OK) else set()
+    hints = [h for h, f in (('html', 'index.html'), ('node', 'package.json'), ('git', '.git')) if f in names]
+    home = os.path.realpath(os.path.expanduser('~'))
+    return {'path': path, 'parent': os.path.dirname(path) if path != '/' else None, 'dirs': dirs[:500], 'hints': hints,
+            'display': '~' + path[len(home):] if path == home or path.startswith(home + os.sep) else path}
+
+
 def page_label(page):
     page = page or {}
     return f'{page.get("pathname", "/")}{page.get("hash", "")}'
@@ -265,7 +402,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     server_version = 'livequill'
 
     def __init__(self, *a, **k):
-        super().__init__(*a, directory=self.app.project.root, **k)
+        super().__init__(*a, directory=self.app.project.root if self.app.project else STATIC, **k)
 
     # --- garde-fous ------------------------------------------------------
     def host_ok(self):
@@ -310,6 +447,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_json({'error': msg}, status)
 
     def log_message(self, fmt, *args):
+        if os.environ.get('LIVEQUILL_QUIET'):
+            return
         path = urllib.parse.urlsplit(self.path).path   # jamais la query (jeton) ni le corps
         if path.startswith(('/__lq/reload', '/__lq/api/jobs', '/__lq/overlay.js', '/__lq/api/state')):
             return
@@ -344,6 +483,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         u = urllib.parse.urlsplit(self.path)
         if u.path == '/__setup' or u.path.startswith('/__lq/'):
             return self.internal(method, u)
+        if self.app.project is None:
+            return self.hub_page(method, u)
         if not self.app.config.configured and method == 'GET' and self.wants_html(u.path):
             self.send_response(302)
             self.send_header('Location', '/__setup?next=' + urllib.parse.quote(self.path, safe=''))
@@ -354,6 +495,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if method in ('GET', 'HEAD'):
             return self.static(method, u)
         self.send_error(405)
+
+    def hub_page(self, method, u):
+        """Tableau de bord : setup au premier lancement, puis la liste des sites."""
+        if method != 'GET' or u.path not in ('/', '/index.html'):
+            return self.send_error(404)
+        if not self.app.config.configured:
+            self.send_response(302)
+            self.send_header('Location', '/__setup?next=%2F')
+            self.end_headers()
+            return
+        with open(os.path.join(STATIC, 'hub.html'), 'rb') as f:
+            html = f.read().replace(b'__LQ_TOKEN__', self.app.token.encode())
+        return self.send_bytes(html, 'text/html; charset=utf-8',
+                               extra={'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'",
+                                      'Referrer-Policy': 'no-referrer'})
 
     def wants_html(self, path):
         accept = self.headers.get('Accept', '')
@@ -373,6 +529,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                           'Referrer-Policy': 'no-referrer'})
         if not self.same_origin() or not self.token_ok(q):
             return self.deny(403, 'jeton ou origine invalide')
+        hub = app.project is None
+        site_only = p in ('/__lq/reload', '/__lq/api/state', '/__lq/api/prompt', '/__lq/api/undo',
+                          '/__lq/api/conversation/clear') or p.startswith('/__lq/api/jobs/')
+        hub_only = p.startswith('/__lq/api/sites') or p == '/__lq/api/browse'
+        if (hub and site_only) or (not hub and hub_only):
+            return self.deny(404, 'introuvable')
         if p == '/__lq/reload' and method == 'GET':
             return self.stream_reload()
         m = re.fullmatch(r'/__lq/api/jobs/(\w+)/events', p)
@@ -387,7 +549,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json(app.status())
             if p == '/__lq/api/kinds':
                 return self.send_json({'kinds': adapters.public_kinds(), 'providers': app.config.public_providers(),
-                                       'default': app.config.data.get('default'), 'root': app.project.root, 'mode': app.mode})
+                                       'default': app.config.data.get('default'), 'mode': app.mode,
+                                       'root': app.project.root if app.project else None,
+                                       'hub_url': app.sites.url if hub else app.hub_url})
+            if p == '/__lq/api/sites':
+                return self.send_json({'sites': app.sites.public(), 'default': app.config.data.get('default'),
+                                       'providers': {k: v.get('label') or adapters.KINDS[v['type']]['label']
+                                                     for k, v in app.config.providers().items()}})
+            if p == '/__lq/api/browse':
+                try:
+                    return self.send_json(browse((q.get('path') or ['~'])[0]))
+                except ValueError as e:
+                    return self.send_json({'ok': False, 'message': str(e)}, 400)
             return self.deny(404, 'introuvable')
         if method not in ('POST', 'DELETE'):
             return self.deny(405, 'méthode refusée')
@@ -423,6 +596,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json(app.save_provider(body))
             if p == '/__lq/api/providers/delete':
                 app.config.remove(str(body.get('id')))
+                return self.send_json({'ok': True})
+            if p == '/__lq/api/sites/save':
+                return self.send_json({'ok': True, 'site': app.sites.save(body)})
+            if p == '/__lq/api/sites/delete':
+                app.sites.remove(str(body.get('id')))
+                return self.send_json({'ok': True})
+            if p == '/__lq/api/sites/start':
+                port = app.sites.start(str(body.get('id')))
+                return self.send_json({'ok': True, 'url': f'http://127.0.0.1:{port}/'})
+            if p == '/__lq/api/sites/stop':
+                app.sites.stop(str(body.get('id')))
                 return self.send_json({'ok': True})
             if p == '/__lq/api/default':
                 app.config.set_default(str(body.get('provider')), str(body.get('model')))

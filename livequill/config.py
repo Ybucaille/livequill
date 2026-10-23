@@ -27,6 +27,7 @@ class Config:
             data = {}
         data.setdefault('providers', {})
         data.setdefault('default', None)
+        data.setdefault('sites', [])
         return data
 
     def save(self):
@@ -77,6 +78,29 @@ class Config:
             if pid in self.data['providers']:
                 self.data['default'] = {'provider': pid, 'model': model}
                 self.save()
+
+    # --- sites gérés depuis le tableau de bord ---------------------------
+    def sites(self):
+        return self.data['sites']
+
+    def get_site(self, sid):
+        return next((x for x in self.data['sites'] if x['id'] == sid), None)
+
+    def upsert_site(self, site):
+        with self.lock:
+            sites = [x for x in self.data['sites'] if x['id'] != site['id']]
+            old = self.get_site(site['id'])
+            if old:
+                sites.insert(self.data['sites'].index(old), site)
+            else:
+                sites.append(site)
+            self.data['sites'] = sites
+            self.save()
+
+    def remove_site(self, sid):
+        with self.lock:
+            self.data['sites'] = [x for x in self.data['sites'] if x['id'] != sid]
+            self.save()
 
     def secrets(self):
         out = []

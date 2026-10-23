@@ -147,6 +147,85 @@ class ProxyMode(ServerBase):
         self.assertEqual(self.api('GET', '/__lq/api/state')[0], 200)   # l'API reste servie par l'outil
 
 
+class HubMode(unittest.TestCase):
+    """Tableau de bord : setup au premier lancement, puis gestion des sites, chacun sur son port."""
+
+    def setUp(self):
+        self.site_root = temp_project({'index.html': PAGE})
+        self.cfgdir = temp_project()
+        self.config = Config(os.path.join(self.cfgdir, 'config.json'))
+        self.hub = App(None, 0, config=self.config, transport=FakeTransport())
+        self.srv = serve(self.hub)
+
+    def tearDown(self):
+        self.hub.sites.stop_all()
+        self.srv.shutdown()
+        self.srv.server_close()
+        cleanup(self.site_root, self.cfgdir)
+
+    def req(self, method, path, body=None, port=None, token=None):
+        port = port or self.hub.port
+        c = http.client.HTTPConnection('127.0.0.1', port, timeout=5)
+        h = {'Host': f'127.0.0.1:{port}'}
+        if token:
+            h['X-LQ-Token'] = token
+        data = json.dumps(body).encode() if body is not None else None
+        if data is not None:
+            h['Content-Type'] = 'application/json'
+        c.request(method, path, body=data, headers=h)
+        r = c.getresponse()
+        out = (r.status, dict(r.getheaders()), r.read())
+        c.close()
+        return out
+
+    def test_first_run_then_sites(self):
+        s, h, _ = self.req('GET', '/')
+        self.assertEqual((s, h['Location']), (302, '/__setup?next=%2F'))
+        self.config.upsert('ollama', {'type': 'ollama', 'models': [{'id': 'qwen', 'label': 'qwen'}], 'default_model': 'qwen'})
+        s, _, body = self.req('GET', '/')
+        self.assertEqual(s, 200)
+        self.assertIn(b'Mes sites', body)
+        self.assertIn(self.hub.token.encode(), body)
+        tok = self.hub.token
+        self.assertEqual(json.loads(self.req('GET', '/__lq/api/sites', token=tok)[2])['sites'], [])
+        # dossier invalide, racine refusée
+        self.assertEqual(self.req('POST', '/__lq/api/sites/save', {'root': '/nope/nope'}, token=tok)[0], 400)
+        self.assertEqual(self.req('POST', '/__lq/api/sites/save', {'root': '/'}, token=tok)[0], 400)
+        s, _, body = self.req('POST', '/__lq/api/sites/save', {'root': self.site_root, 'name': 'Mon site'}, token=tok)
+        site = json.loads(body)['site']
+        self.assertEqual(site['name'], 'Mon site')
+        self.assertEqual(self.req('POST', '/__lq/api/sites/save', {'root': self.site_root}, token=tok)[0], 400)  # doublon
+        url = json.loads(self.req('POST', '/__lq/api/sites/start', {'id': site['id']}, token=tok)[2])['url']
+        port = int(url.rsplit(':', 1)[1].strip('/'))
+        self.assertNotEqual(port, self.hub.port)
+        s, _, page = self.req('GET', '/', port=port)
+        self.assertIn(b'/__lq/overlay.js', page)
+        site_app = self.hub.sites.running[site['id']][0]
+        kinds = json.loads(self.req('GET', '/__lq/api/kinds', port=port, token=site_app.token)[2])
+        self.assertEqual(kinds['hub_url'], self.hub.sites.url)
+        listed = json.loads(self.req('GET', '/__lq/api/sites', token=tok)[2])['sites'][0]
+        self.assertTrue(listed['running'])
+        self.assertEqual(self.config.get_site(site['id'])['port'], port)      # port mémorisé
+        self.req('POST', '/__lq/api/sites/delete', {'id': site['id']}, token=tok)
+        self.assertEqual(self.config.sites(), [])
+        self.assertTrue(os.path.isfile(os.path.join(self.site_root, 'index.html')))   # le dossier n'est jamais supprimé
+
+    def test_api_split_between_hub_and_sites(self):
+        tok = self.hub.token
+        self.assertEqual(self.req('GET', '/__lq/api/state', token=tok)[0], 404)
+        self.assertEqual(self.req('POST', '/__lq/api/prompt', {'text': 'x'}, token=tok)[0], 404)
+        self.assertEqual(self.req('GET', '/__lq/api/sites')[0], 403)                  # sans jeton
+        r = json.loads(self.req('GET', '/__lq/api/browse?path=' + self.site_root, token=tok)[2])
+        self.assertEqual(r['path'], os.path.realpath(self.site_root))
+        self.assertIn('html', r['hints'])
+
+    def test_ensure_from_command_line(self):
+        sid = self.hub.sites.ensure(self.site_root)
+        self.assertEqual(self.hub.sites.ensure(self.site_root), sid)
+        self.hub.sites.ensure(self.site_root, 'http://localhost:5173')
+        self.assertEqual(self.config.get_site(sid)['proxy'], 'http://localhost:5173')
+
+
 class ConfigFile(unittest.TestCase):
     def test_keep_key_on_empty_update_and_redact(self):
         d = temp_project()

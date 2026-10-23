@@ -18,6 +18,7 @@
   .top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
   .go{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:var(--acc);color:#fff;text-decoration:none;font-weight:500;white-space:nowrap}
   .go:hover{background:#e0896b}.go[hidden]{display:none}
+  .links{display:flex;gap:14px;align-items:center}.links a[hidden]{display:none}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
   .card{position:relative;display:flex;flex-direction:column;gap:4px;min-height:118px;padding:14px 14px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;outline:0}
   .card:hover,.card:focus-visible,.card.sel{border-color:var(--acc)}
@@ -75,9 +76,9 @@
   <div class="top">
     <div>
       <h1>LiveQuill</h1>
-      <p>Choisis le modèle qui modifiera <code id="root"></code>. Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne sont jamais envoyées au navigateur.</p>
+      <p><span id="intro">Choisis le modèle qui modifiera tes sites.</span> Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne sont jamais envoyées au navigateur.</p>
     </div>
-    <a class="go" id="go" href="/" hidden>Ouvrir le site →</a>
+    <div class="links"><a class="ext" id="hub" href="/" hidden>Tous mes sites ↗</a><a class="go" id="go" href="/" hidden>Mes sites →</a></div>
   </div>
 
   <h2>API cloud</h2>
@@ -133,9 +134,13 @@
   async function refresh(recheck = true) {
     const r = await api('kinds');
     K = r.kinds; P = r.providers; D = r.default;
-    $('#root').textContent = r.root + (r.mode === 'proxy' ? ' (mode proxy)' : '');
+    const onSite = r.mode !== 'hub';
+    if (onSite) $('#intro').innerHTML = `Choisis le modèle qui modifiera <code>${esc(r.root)}</code>${r.mode === 'proxy' ? ' (mode proxy)' : ''}.`;
     $('#go').hidden = !Object.keys(P).length;
     $('#go').href = next.startsWith('/') && !next.startsWith('//') ? next : '/';
+    $('#go').textContent = onSite ? 'Retour au site →' : 'Mes sites →';
+    $('#hub').hidden = !(onSite && r.hub_url);
+    if (r.hub_url) $('#hub').href = r.hub_url;
     if (recheck) status = {};
     renderCards();
     if (recheck && Object.keys(P).length) { status = await api('status').catch(() => ({})); renderCards(); }
@@ -293,6 +298,7 @@
   $('#form').addEventListener('submit', async e => {
     e.preventDefault();
     const msg = $('#f-msg');
+    const first = !Object.keys(P).length;
     const body = { ...formBody(), models: models.map(({ id, label, meta, shown }) => ({ id, label, meta, shown })), default_model: edit.default,
       make_default: $('#f-default').checked };
     try {
@@ -300,6 +306,8 @@
       if (!r.ok) throw new Error(r.message);
       $('#form').hidden = true; edit = null;
       await refresh();
+      // Premier fournisseur enregistré : on enchaîne directement sur la page des sites (ou le site)
+      if (first) { location.href = $('#go').href; return; }
       $('#go').focus();
     } catch (err) { msg.className = 'msg bad'; msg.textContent = '✗ ' + err.message; }
   });
@@ -320,7 +328,7 @@
   for (const g of document.querySelectorAll('.grid')) { g.addEventListener('click', pick); g.addEventListener('keydown', pick); }
 
   api('detect').then(d => { det = d; renderCards(); }).catch(() => {});
-  refresh().catch(e => { $('#root').textContent = e.message; });
+  refresh().catch(e => { $('#intro').textContent = e.message; });
 })();
 </script>
 </body>

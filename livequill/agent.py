@@ -306,7 +306,7 @@ def run_api(ctx, job, ad, model, opts, caps, atts, tx, conf):
     messages = history_messages(ctx.conversation.load()) + [user]
     tools = Toolbox(project, tx, atts, job.emit)
     answer, nudged = '', False
-    for step in range(MAX_STEPS):
+    for _step in range(MAX_STEPS):
         if job.cancelled:
             raise Cancelled()
         system = SYSTEM + (TEXT_PROTOCOL if text_mode else '')

@@ -2,6 +2,7 @@
 import json, os, shutil, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault('LIVEQUILL_QUIET', '1')   # pas de journal HTTP pendant les tests
 
 
 def temp_project(files=None):

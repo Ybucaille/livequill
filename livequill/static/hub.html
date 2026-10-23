@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lq-token" content="__LQ_TOKEN__">
+<title>LiveQuill · mes sites</title>
+<style>
+  :root{--bg:#1f1e1d;--card:#262624;--line:#3a3a3a;--ink:#eceae4;--mute:#8f8d86;--soft:#b9b6ad;--acc:#d97757;--acc2:#f0a37f;--ok:#7fc49a;--warn:#e3b65a;--bad:#ff8a7a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:28px 16px 80px}
+  header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:24px;margin:0;font-weight:600;flex:1}
+  nav{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  nav a{padding:6px 12px;border-radius:8px;color:var(--soft);text-decoration:none;font-size:14px}
+  nav a:hover{color:var(--ink);background:#30302e}
+  nav a[aria-current]{background:#34332f;color:var(--ink)}
+  p{margin:0 0 8px;color:var(--soft)}
+  code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc2)}
+  a{color:var(--acc2)}
+  .model{font-size:13.5px;color:var(--mute)}
+  .model b{color:var(--soft);font-weight:500}
+  h2{font-size:13px;margin:26px 0 10px;color:var(--mute);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .site{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card);min-height:150px}
+  .site.sel{border-color:var(--acc)}
+  .kh{display:flex;align-items:center;gap:10px}
+  .kh b{flex:1;font-size:15.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{flex:none;width:12px;height:12px;border-radius:50%;border:1.5px solid var(--mute)}
+  .on .dot{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 3px rgba(127,196,154,.15)}
+  .busy .dot{background:var(--warn);border-color:var(--warn)}
+  .bad .dot{background:var(--bad);border-color:var(--bad)}
+  .path{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
+  .meta{font-size:12.5px;color:var(--mute)}
+  .on .state{color:var(--ok)}.busy .state{color:var(--warn)}.bad .state{color:var(--bad)}
+  .state{font-size:13px;font-weight:500;color:var(--mute)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+  button.b{padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:#30302e;color:var(--ink);cursor:pointer;font:inherit;font-size:13.5px}
+  button.b:hover{background:#3a3936}
+  button.b.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.b.pri:hover{background:#e0896b}
+  button.b.ghost{background:none}
+  button.b.danger{color:var(--bad)}
+  button.b:disabled{opacity:.45;cursor:default}
+  button.b[hidden]{display:none}
+  .add{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;min-height:150px;border:1.5px dashed var(--line);border-radius:14px;background:none;color:var(--soft);cursor:pointer;font:inherit;text-align:center;padding:14px}
+  .add:hover{border-color:var(--acc);color:var(--ink)}
+  .add b{font-size:15px;color:var(--ink)}
+  .add small{color:var(--mute);font-size:12.5px;max-width:240px}
+  .plus{font-size:26px;line-height:1;color:var(--acc)}
+  form{margin-top:16px;padding:18px;border:1px solid var(--acc);border-radius:14px;background:var(--card)}
+  form[hidden]{display:none}
+  form h3{margin:0 0 4px;font-size:17px;font-weight:600}
+  label{display:block;margin:12px 0 4px;font-size:13px;color:var(--soft)}
+  input[type=text],input[type=url]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#1f1e1d;color:var(--ink);font:inherit}
+  input:focus{outline:2px solid #6b4130;border-color:var(--acc)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .row .sp{flex:1}
+  .inline{display:flex;gap:8px}.inline input{flex:1}
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .mode{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;margin:0;color:var(--ink);font-size:14px}
+  .mode:has(input:checked){border-color:var(--acc);background:#2e2a27}
+  .mode small{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+  .mode input{margin-top:4px;accent-color:var(--acc)}
+  .msg{font-size:13.5px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+  .browser{margin-top:8px;border:1px solid var(--line);border-radius:10px;background:#1f1e1d;overflow:hidden}
+  .browser[hidden]{display:none}
+  .bhead{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #2f2f2d;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--soft)}
+  .bhead span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
+  .blist{max-height:240px;overflow:auto;scrollbar-width:thin;scrollbar-color:#4a4945 transparent}
+  .blist button{display:block;width:100%;padding:7px 12px;border:0;border-top:1px solid #2a2a28;background:none;color:var(--ink);text-align:left;cursor:pointer;font:13.5px system-ui,sans-serif}
+  .blist button:first-child{border-top:0}
+  .blist button:hover{background:#2c2b29}
+  .blist .empty{padding:10px 12px;color:var(--mute);font-size:13px}
+  .hint{font-size:12px;color:var(--ok);margin-left:6px}
+  .empty-state{grid-column:1/-1;padding:18px;border:1px dashed var(--line);border-radius:14px;color:var(--mute)}
+  @media (max-width:560px){.modes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>LiveQuill</h1>
+    <nav><a href="/" aria-current="page">Mes sites</a><a href="/__setup?next=%2F">Fournisseurs</a></nav>
+  </header>
+  <p class="model" id="model"></p>
+
+  <h2>Mes sites</h2>
+  <div class="grid" id="sites"></div>
+
+  <form id="form" hidden autocomplete="off">
+    <h3 id="f-title">Ajouter un site</h3>
+    <p>LiveQuill sert ton site avec la barre de prompt, sans rien écrire dans ton projet. Le modèle ne pourra modifier que ce dossier.</p>
+    <label for="f-root">Dossier du projet</label>
+    <div class="inline"><input type="text" id="f-root" placeholder="~/projets/mon-site" spellcheck="false" required><button type="button" class="b" id="f-browse">Parcourir…</button></div>
+    <div class="browser" id="browser" hidden>
+      <div class="bhead"><button type="button" class="b ghost" id="b-up" title="Dossier parent">↑</button><span id="b-path"></span><button type="button" class="b" id="b-pick">Choisir ce dossier</button></div>
+      <div class="blist" id="b-list"></div>
+    </div>
+    <label for="f-name">Nom affiché</label>
+    <input type="text" id="f-name" placeholder="le nom du dossier par défaut">
+    <label>Comment le servir</label>
+    <div class="modes">
+      <label class="mode"><input type="radio" name="mode" value="static" checked><span>Dossier statique<small>LiveQuill sert les fichiers tels quels (HTML, CSS, JS).</small></span></label>
+      <label class="mode"><input type="radio" name="mode" value="proxy"><span>Devant mon serveur de dev<small>Vite, Next, Astro… LiveQuill ajoute la barre à ses pages.</small></span></label>
+    </div>
+    <div id="f-proxy-row" hidden>
+      <label for="f-proxy">URL du serveur de dev</label>
+      <input type="url" id="f-proxy" placeholder="http://localhost:5173" spellcheck="false">
+    </div>
+    <div class="row">
+      <button type="submit" class="b pri" id="f-save">Enregistrer</button>
+      <button type="button" class="b" id="f-cancel">Fermer</button>
+      <span class="msg" id="f-msg" role="status"></span>
+      <span class="sp"></span>
+      <button type="button" class="b danger" id="f-delete" hidden>Retirer de la liste</button>
+    </div>
+  </form>
+</main>
+<script>
+(() => {
+  const TOKEN = document.querySelector('meta[name=lq-token]').content;
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const api = async (path, body) => {
+    const res = await fetch('/__lq/api/' + path, body === undefined ? { headers: { 'X-LQ-Token': TOKEN } } :
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-LQ-Token': TOKEN }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.message || data.error || 'HTTP ' + res.status);
+    return data;
+  };
+  let sites = [], edit = null, cwd = null;
+
+  async function refresh() {
+    const r = await api('sites');
+    sites = r.sites;
+    const d = r.default;
+    $('#model').innerHTML = d ? `Modèle par défaut : <b>${esc(d.model)}</b> · ${esc(r.providers[d.provider] || d.provider)} — modifiable dans la barre de chaque site.` : '';
+    render();
+  }
+
+  function render() {
+    const cards = sites.map(s => {
+      const st = !s.exists ? 'bad' : s.busy ? 'busy' : s.running ? 'on' : '';
+      const label = !s.exists ? 'Dossier introuvable' : s.busy ? 'Le modèle travaille…' : s.running ? `En ligne · ${s.url.replace('http://', '')}` : 'Arrêté';
+      return `<div class="site ${st} ${edit && edit.id === s.id ? 'sel' : ''}">
+        <div class="kh"><b title="${esc(s.name)}">${esc(s.name)}</b><span class="dot" aria-hidden="true"></span></div>
+        <div class="path" title="${esc(s.root)}"><bdi>${esc(s.display)}</bdi></div>
+        <div class="meta">${s.proxy ? `Proxy → ${esc(s.proxy)}` : 'Dossier statique'}</div>
+        <div class="state">${esc(label)}</div>
+        <div class="acts">
+          <button class="b pri" data-open="${s.id}" ${s.exists ? '' : 'disabled'}>Ouvrir ↗</button>
+          <button class="b" data-edit="${s.id}">Modifier</button>
+          <button class="b ghost" data-stop="${s.id}" ${s.running ? '' : 'hidden'}>Arrêter</button>
+        </div></div>`;
+    }).join('');
+    const add = `<button type="button" class="add" id="add"><span class="plus">+</span><b>Ajouter un site</b><small>Un dossier de projet, servi tel quel ou derrière ton serveur de dev.</small></button>`;
+    $('#sites').innerHTML = (sites.length ? cards : `<div class="empty-state">Aucun site pour l’instant. Ajoute le dossier d’un projet web : tu pourras ensuite l’ouvrir avec la barre de prompt et demander des modifs en direct.</div>`) + add;
+  }
+
+  function openForm(site) {
+    edit = site ? { id: site.id } : { id: null };
+    $('#f-title').textContent = site ? 'Modifier · ' + site.name : 'Ajouter un site';
+    $('#f-root').value = site ? site.root : '';
+    $('#f-name').value = site ? site.name : '';
+    $('#f-proxy').value = site ? site.proxy : '';
+    document.querySelector(`input[name=mode][value=${site && site.proxy ? 'proxy' : 'static'}]`).checked = true;
+    syncMode();
+    $('#f-delete').hidden = !site;
+    $('#f-msg').textContent = '';
+    $('#browser').hidden = true;
+    $('#form').hidden = false;
+    render();
+    $('#form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#f-root').focus();
+  }
+  const syncMode = () => { $('#f-proxy-row').hidden = document.querySelector('input[name=mode]:checked').value !== 'proxy'; };
+  document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', syncMode));
+
+  /* Choisir le dossier : petit explorateur (noms de dossiers seulement) */
+  async function browseTo(path) {
+    try {
+      const r = await api('browse?path=' + encodeURIComponent(path));
+      cwd = r;
+      $('#b-path').innerHTML = `<bdi>${esc(r.display)}</bdi>` + r.hints.map(h => `<span class="hint">${{ html: 'index.html', node: 'package.json', git: 'git' }[h]}</span>`).join('');
+      $('#b-up').disabled = !r.parent;
+      $('#b-list').innerHTML = r.dirs.length ? r.dirs.map(d => `<button type="button" data-dir="${esc(d)}">📁 ${esc(d)}</button>`).join('') : '<div class="empty">Aucun sous-dossier</div>';
+    } catch (e) { $('#f-msg').className = 'msg bad'; $('#f-msg').textContent = e.message; }
+  }
+  $('#f-browse').addEventListener('click', () => { const b = $('#browser'); b.hidden = !b.hidden; if (!b.hidden) browseTo($('#f-root').value.trim() || '~'); });
+  $('#b-list').addEventListener('click', e => { const b = e.target.closest('[data-dir]'); if (b) browseTo(cwd.path + '/' + b.dataset.dir); });
+  $('#b-up').addEventListener('click', () => cwd && cwd.parent && browseTo(cwd.parent));
+  $('#b-pick').addEventListener('click', () => {
+    if (!cwd) return;
+    $('#f-root').value = cwd.path;
+    if (!$('#f-name').value) $('#f-name').placeholder = cwd.path.split('/').pop();
+    if (cwd.hints.includes('node') && !cwd.hints.includes('html')) {   // projet Node : sans doute un serveur de dev
+      document.querySelector('input[name=mode][value=proxy]').checked = true; syncMode();
+      if (!$('#f-proxy').value) $('#f-proxy').value = 'http://localhost:5173';
+    }
+    $('#browser').hidden = true;
+  });
+
+  $('#form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const proxy = document.querySelector('input[name=mode]:checked').value === 'proxy' ? $('#f-proxy').value.trim() : '';
+    try {
+      await api('sites/save', { id: edit.id, root: $('#f-root').value.trim(), name: $('#f-name').value.trim(), proxy });
+      $('#form').hidden = true; edit = null;
+      await refresh();
+    } catch (err) { $('#f-msg').className = 'msg bad'; $('#f-msg').textContent = '✗ ' + err.message; }
+  });
+  $('#f-cancel').addEventListener('click', () => { $('#form').hidden = true; edit = null; render(); });
+  $('#f-delete').addEventListener('click', async () => {
+    if (!edit.id || !confirm('Retirer ce site de la liste ? Le dossier et ses fichiers ne sont pas supprimés.')) return;
+    await api('sites/delete', { id: edit.id });
+    $('#form').hidden = true; edit = null; refresh();
+  });
+
+  $('#sites').addEventListener('click', async e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.id === 'add') return openForm(null);
+    if (t.dataset.edit) return openForm(sites.find(s => s.id === t.dataset.edit));
+    if (t.dataset.stop) { await api('sites/stop', { id: t.dataset.stop }).catch(() => {}); return refresh(); }
+    if (t.dataset.open) {
+      const w = window.open('about:blank', '_blank');     // ouvert tout de suite : pas bloqué comme pop-up
+      try {
+        const r = await api('sites/start', { id: t.dataset.open });
+        if (w) w.location.href = r.url; else location.href = r.url;
+      } catch (err) { if (w) w.close(); alert(err.message); }
+      refresh();
+    }
+  });
+
+  refresh().catch(e => { $('#sites').textContent = e.message; });
+  setInterval(() => { if ($('#form').hidden) refresh().catch(() => {}); }, 4000);
+})();
+</script>
+</body>
+</html>
