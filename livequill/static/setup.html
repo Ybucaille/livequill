@@ -4,91 +4,222 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="lq-token" content="__LQ_TOKEN__">
-<title>LiveQuill · réglages</title>
+<title>LiveQuill · fournisseurs</title>
 <style>
-  :root{--bg:#1f1e1d;--card:#262624;--line:#3a3a3a;--ink:#eceae4;--mute:#8f8d86;--soft:#b9b6ad;--acc:#d97757;--acc2:#f0a37f;--ok:#7fc49a;--warn:#e3b65a;--bad:#ff8a7a}
+  /* Jour par défaut, nuit si le système est en sombre */
+  :root{
+    --sky-1:#7fb8f5;--sky-2:#b9dcff;--sky-3:#eef7ff;--cloud:#ffffff;--cloud-o:.92;--cushion:#ffffff;--cushion-o:.95;--glow:rgba(255,236,170,.75);
+    --ink:#12203a;--soft:#33445f;--mute:#5d6d88;--line:rgba(255,255,255,.85);--line2:rgba(18,32,58,.10);
+    --glass:rgba(255,255,255,.52);--glass-2:rgba(255,255,255,.80);--card:rgba(255,255,255,.72);--card-h:rgba(255,255,255,.95);
+    --field:rgba(255,255,255,.9);--shadow:0 24px 60px rgba(40,80,140,.22);
+    --acc:#d4623c;--acc-2:#b9502c;--acc-soft:rgba(217,119,87,.14);
+    --ok:#1c9a59;--warn:#b7800d;--bad:#d13f37;--local:#0f8a6a;--cloudc:#2f6fd6;--cli:#7a4fd0;
+  }
+  @media (prefers-color-scheme: dark){:root{
+    --sky-1:#050817;--sky-2:#0c1433;--sky-3:#1a2754;--cloud:#2e3d70;--cloud-o:.55;--cushion:#4a5c9e;--cushion-o:.62;--glow:rgba(200,215,255,.35);
+    --ink:#eef2ff;--soft:#c3cbe6;--mute:#93a0c4;--line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.08);
+    --glass:rgba(16,24,54,.55);--glass-2:rgba(22,32,70,.85);--card:rgba(255,255,255,.06);--card-h:rgba(255,255,255,.11);
+    --field:rgba(8,12,30,.6);--shadow:0 24px 70px rgba(0,0,0,.45);
+    --acc:#e8845f;--acc-2:#f0a37f;--acc-soft:rgba(232,132,95,.16);
+    --ok:#73d6a0;--warn:#f0c060;--bad:#ff8a7a;--local:#5fd3b1;--cloudc:#7fb0ff;--cli:#b598ff;
+  }}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-  main{max-width:900px;margin:0 auto;padding:32px 16px 80px}
-  h1{font-size:24px;margin:0 0 4px;font-weight:600}
-  h2{font-size:13px;margin:30px 0 10px;color:var(--mute);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
-  p{margin:0 0 8px;color:var(--soft)}
-  code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc2)}
-  a{color:var(--acc2)}
-  .top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
-  .go{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:var(--acc);color:#fff;text-decoration:none;font-weight:500;white-space:nowrap}
-  .go:hover{background:#e0896b}.go[hidden]{display:none}
-  .links{display:flex;gap:14px;align-items:center}.links a[hidden]{display:none}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-  .card{position:relative;display:flex;flex-direction:column;gap:4px;min-height:118px;padding:14px 14px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;outline:0}
-  .card:hover,.card:focus-visible,.card.sel{border-color:var(--acc)}
-  .card .kh{display:flex;align-items:center;gap:10px;padding-right:2px}
-  .card .kh b{flex:1;font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dot{flex:none;width:14px;height:14px;border-radius:50%;border:1.5px solid var(--mute)}
-  .st-ok .dot{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 3px rgba(127,196,154,.15)}
-  .st-found .dot{border-color:var(--warn);background:rgba(227,182,90,.25)}
+  html,body{min-height:100%}
+  body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--sky-2);overflow-x:hidden}
+  a{color:var(--acc)}
+  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc-2)}
+
+  /* --- Ciel : dégradé, astre, étoiles, nuages en parallaxe --- */
+  .sky{position:fixed;inset:0;z-index:-1;overflow:hidden;background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 45%,var(--sky-3) 100%)}
+  .astre{position:absolute;top:-90px;right:8%;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,var(--glow) 0%,transparent 65%)}
+  .stars{position:absolute;inset:0;opacity:0}
+  @media (prefers-color-scheme: dark){
+    .stars{opacity:.85;background-image:radial-gradient(1.4px 1.4px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 28% 8%,#fff 50%,transparent 51%),
+      radial-gradient(1.2px 1.2px at 47% 22%,#dfe6ff 50%,transparent 51%),radial-gradient(1px 1px at 63% 12%,#fff 50%,transparent 51%),
+      radial-gradient(1.6px 1.6px at 78% 30%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 88% 9%,#cfd8ff 50%,transparent 51%),
+      radial-gradient(1.2px 1.2px at 6% 42%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 35% 38%,#fff 50%,transparent 51%),
+      radial-gradient(1.3px 1.3px at 55% 46%,#e6ebff 50%,transparent 51%),radial-gradient(1px 1px at 93% 48%,#fff 50%,transparent 51%);
+      animation:twinkle 5s ease-in-out infinite alternate}
+  }
+  @keyframes twinkle{from{opacity:.55}to{opacity:.95}}
+  .cloud{position:absolute;left:0;top:var(--y);width:calc(260px * var(--s));height:calc(64px * var(--s));border-radius:999px;background:var(--cloud);
+    opacity:calc(var(--cloud-o) * var(--o));filter:blur(var(--b));will-change:transform;animation:drift var(--d) linear infinite;animation-delay:var(--dl)}
+  .cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+  .cloud::before{width:46%;height:160%;left:16%;bottom:22%}
+  .cloud::after{width:34%;height:125%;right:14%;bottom:26%}
+  @keyframes drift{from{transform:translateX(-45vw)}to{transform:translateX(145vw)}}
+
+  /* --- Mise en page --- */
+  main{max-width:1180px;margin:0 auto;padding:26px 20px 90px}
+  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em;flex:1}
+  .brand svg{width:34px;height:34px;filter:drop-shadow(0 4px 10px rgba(212,98,60,.35))}
+  .links{display:flex;gap:10px;align-items:center}
+  .links a[hidden]{display:none}
+  .pill-link{padding:9px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);color:var(--ink);text-decoration:none;font-size:14px}
+  .go{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;background:var(--acc);color:#fff;text-decoration:none;font-weight:600;box-shadow:0 10px 26px rgba(212,98,60,.35)}
+  .go:hover{filter:brightness(1.07)}
+  .hero{text-align:center;margin:46px auto 34px;max-width:760px}
+  .hero h1{margin:0 0 10px;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
+  .hero p{margin:0 auto;color:var(--soft);font-size:clamp(15.5px,1.8vw,18px);max-width:620px}
+  .legend{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);font-size:13px;color:var(--soft)}
+
+  .isles{display:grid;grid-template-columns:1fr 1fr;gap:54px 34px;align-items:start}
+  .isle{position:relative;padding-bottom:26px}
+  .isle.cli{grid-column:1 / -1;max-width:760px;width:100%;justify-self:center}
+  /* le coussin de nuage sur lequel l'île est posée */
+  .cushion{position:absolute;left:4%;right:4%;bottom:-6px;height:70px;z-index:0;pointer-events:none}
+  .cushion i{position:absolute;bottom:0;border-radius:50%;background:var(--cushion);opacity:var(--cushion-o);filter:blur(10px)}
+  .cushion i:nth-child(1){left:0;width:38%;height:62px}
+  .cushion i:nth-child(2){left:24%;width:52%;height:78px;bottom:6px}
+  .cushion i:nth-child(3){right:0;width:40%;height:58px}
+  .island{position:relative;z-index:1;padding:22px 22px 20px;border-radius:30px;background:var(--glass);border:1px solid var(--line);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);box-shadow:var(--shadow);
+    animation:bob 7s ease-in-out infinite;animation-delay:var(--bd,0s)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  .ihead{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+  .ico{flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:15px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.15)}
+  .ico svg{width:24px;height:24px}
+  .local .ico{background:linear-gradient(135deg,#19b38a,#0f8a6a)}
+  .cloudg .ico{background:linear-gradient(135deg,#4d8df0,#2f6fd6)}
+  .cli .ico{background:linear-gradient(135deg,#9a72f0,#7a4fd0)}
+  .ihead h2{margin:0;font-size:21px;letter-spacing:-.01em}
+  .ihead p{margin:3px 0 0;color:var(--soft);font-size:14px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--line2)}
+  .local .tag{color:var(--local)} .cloudg .tag{color:var(--cloudc)} .cli .tag{color:var(--cli)}
+
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cli .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .card{position:relative;display:flex;flex-direction:column;gap:3px;min-height:112px;padding:13px 14px 12px;border-radius:18px;background:var(--card);
+    border:1px solid var(--line2);cursor:pointer;outline:0;transition:transform .18s,background .18s,box-shadow .18s,border-color .18s}
+  .card:hover,.card:focus-visible{transform:translateY(-2px);background:var(--card-h);box-shadow:0 12px 26px rgba(20,40,80,.14);border-color:var(--line)}
+  .card:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .card.sel{border-color:var(--acc)}
+  .kh{display:flex;align-items:center;gap:10px}
+  .kh b{flex:1;font-weight:650;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{flex:none;width:12px;height:12px;border-radius:50%;border:1.5px solid var(--mute)}
+  .st-ok .dot{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 22%,transparent)}
+  .st-found .dot{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 35%,transparent)}
   .st-bad .dot{background:var(--bad);border-color:var(--bad)}
   .st-check .dot{border-color:var(--soft);border-top-color:transparent;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .state{font-size:13px;font-weight:500;color:var(--mute)}
-  .st-ok .state{color:var(--ok)}.st-found .state{color:var(--warn)}.st-bad .state{color:var(--bad)}
-  .card small{color:var(--mute);font-size:12.5px;line-height:1.4}
-  .card .ext{margin-top:auto;padding-top:4px;font-size:12.5px;width:max-content}
-  .badge{position:absolute;right:12px;bottom:10px;font-size:11px;color:var(--acc2)}
   .card.add .dot{border-style:dashed}
-  form{margin-top:16px;padding:18px;border:1px solid var(--acc);border-radius:14px;background:var(--card)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .state{font-size:12.5px;font-weight:600;color:var(--mute)}
+  .st-ok .state{color:var(--ok)}.st-found .state{color:var(--warn)}.st-bad .state{color:var(--bad)}
+  .card small{color:var(--soft);font-size:12.5px;line-height:1.4}
+  .card .ext{margin-top:auto;padding-top:4px;font-size:12.5px;width:max-content;font-weight:600}
+  .badge{position:absolute;right:12px;bottom:10px;font-size:11px;font-weight:700;color:var(--acc)}
+  footer{margin-top:46px;text-align:center;color:var(--soft);font-size:13px}
+  footer span{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px)}
+
+  /* --- Carte de configuration flottante --- */
+  .overlay{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:20px;background:rgba(8,16,36,.32);backdrop-filter:blur(5px)}
+  .overlay.open{display:grid;animation:fade .2s ease-out}
+  @keyframes fade{from{opacity:0}}
+  form{position:relative;width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px;border-radius:28px;background:var(--glass-2);
+    border:1px solid var(--line);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);box-shadow:0 40px 90px rgba(0,0,0,.35);
+    animation:pop .26s cubic-bezier(.2,.9,.3,1.2);scrollbar-width:thin}
+  @keyframes pop{from{transform:translateY(14px) scale(.97);opacity:0}}
   form[hidden]{display:none}
-  form h3{margin:0 0 4px;font-size:17px;font-weight:600}
-  .howto{margin:6px 0 2px;padding:10px 12px;border-radius:10px;background:#1f1e1d;font-size:13.5px;color:var(--soft)}
-  .howto a{font-weight:500}
-  label{display:block;margin:12px 0 4px;font-size:13px;color:var(--soft)}
-  input[type=text],input[type=password],input[type=url],input[type=number],input[type=search],select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#1f1e1d;color:var(--ink);font:inherit}
-  input:focus,select:focus{outline:2px solid #6b4130;border-color:var(--acc)}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:0;background:var(--line2);color:var(--ink);font-size:18px;cursor:pointer}
+  form h3{margin:0 40px 6px 0;font-size:21px;letter-spacing:-.01em}
+  .kindtag{display:inline-block;margin-bottom:10px}
+  .howto{margin:4px 0 4px;padding:12px 14px;border-radius:14px;background:var(--line2);font-size:14px;color:var(--soft)}
+  .howto a{font-weight:600}
+  label{display:block;margin:14px 0 5px;font-size:13px;font-weight:600;color:var(--soft)}
+  input[type=text],input[type=password],input[type=url],input[type=number],input[type=search],select{width:100%;padding:11px 13px;border:1px solid var(--line2);
+    border-radius:12px;background:var(--field);color:var(--ink);font:inherit}
+  input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--acc) 55%,transparent);border-color:var(--acc)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
   .row .sp{flex:1}
-  .check{display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--soft);font-size:13.5px}
-  .check label{margin:0}
-  button.b{padding:9px 14px;border:1px solid var(--line);border-radius:9px;background:#30302e;color:var(--ink);cursor:pointer;font:inherit}
-  button.b:hover{background:#3a3936}
-  button.b.pri{background:var(--acc);border-color:var(--acc);color:#fff}
-  button.b.pri:hover{background:#e0896b}
-  button.b.danger{color:var(--bad)}
-  button.b:disabled{opacity:.45;cursor:default}
+  .check{display:flex;gap:9px;align-items:center;margin:12px 0 0;color:var(--soft);font-size:14px}
+  .check label{margin:0;font-weight:500}
+  .check input{accent-color:var(--acc);width:16px;height:16px}
+  button.b{padding:10px 16px;border:1px solid var(--line2);border-radius:12px;background:var(--card-h);color:var(--ink);cursor:pointer;font:inherit;font-weight:600}
+  button.b:hover{filter:brightness(1.04)}
+  button.b.pri{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 8px 20px rgba(212,98,60,.3)}
+  button.b.danger{color:var(--bad);background:none}
+  button.b:disabled{opacity:.45;cursor:default;box-shadow:none}
   button.b[hidden]{display:none}
-  .msg{font-size:13.5px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
-  .models{margin-top:12px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .msg{font-size:14px;font-weight:600}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+  .models{margin-top:12px;max-height:280px;overflow:auto;border:1px solid var(--line2);border-radius:14px;background:var(--card);scrollbar-width:thin}
   .models[hidden]{display:none}
-  .models{scrollbar-width:thin;scrollbar-color:#4a4945 transparent}
-  .models::-webkit-scrollbar{width:10px}
-  .models::-webkit-scrollbar-thumb{background:#4a4945;border-radius:10px;border:3px solid var(--card)}
-  .models::-webkit-scrollbar-button{display:none}
-  .m{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:7px 12px;border-top:1px solid #2f2f2d;font-size:13.5px}
+  .m{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 13px;border-top:1px solid var(--line2);font-size:14px}
   .m:first-child{border-top:0}
+  .m input{accent-color:var(--acc)}
   .m small{color:var(--mute);font-size:12px}
-  .m .def{font-size:12px;color:var(--mute);display:flex;gap:5px;align-items:center;margin:0}
-  details{margin-top:12px;color:var(--soft);font-size:13.5px}
+  .m .def{font-size:12px;color:var(--mute);display:flex;gap:5px;align-items:center;margin:0;font-weight:500}
+  details{margin-top:14px;color:var(--soft);font-size:14px}
   details[hidden]{display:none}
-  summary{cursor:pointer;color:var(--mute)}
+  summary{cursor:pointer;color:var(--mute);font-weight:600}
+
+  @media (max-width:900px){.isles{grid-template-columns:1fr;gap:46px}.cli .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:520px){.grid,.cli .grid{grid-template-columns:1fr}.island{padding:18px 16px;border-radius:24px}.hero{margin:30px auto 26px}}
+  @media (prefers-reduced-motion: reduce){.cloud,.island,.stars,.overlay.open,form{animation:none}.card{transition:none}}
 </style>
 </head>
 <body>
+<div class="sky" aria-hidden="true"><div class="astre"></div><div class="stars"></div><div id="clouds"></div></div>
+
 <main>
-  <div class="top">
-    <div>
-      <h1>LiveQuill</h1>
-      <p><span id="intro">Choisis le modèle qui modifiera tes sites.</span> Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne sont jamais envoyées au navigateur.</p>
-    </div>
-    <div class="links"><a class="ext" id="hub" href="/" hidden>Tous mes sites ↗</a><a class="go" id="go" href="/" hidden>Mes sites →</a></div>
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#d97757"/><path d="M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z" fill="#fff"/></svg>LiveQuill</div>
+    <div class="links"><a class="pill-link" id="hub" href="/" hidden>Tous mes sites ↗</a><a class="go" id="go" href="/" hidden>Mes sites →</a></div>
+  </header>
+
+  <section class="hero">
+    <h1 id="headline">Où doit tourner ton modèle ?</h1>
+    <p id="intro">Choisis le modèle qui modifiera tes sites : sur ta machine, gratuit et privé, ou dans le cloud, plus puissant. Tu pourras en ajouter d’autres et en changer à tout moment.</p>
+    <div class="legend"><span><i class="dot" style="background:var(--ok);border-color:var(--ok)"></i>Disponible</span><span><i class="dot" style="border-color:var(--warn);background:color-mix(in srgb,var(--warn) 35%,transparent)"></i>Détecté, un clic pour l’activer</span><span><i class="dot"></i>À configurer</span></div>
+  </section>
+
+  <div class="isles">
+    <section class="isle local" aria-labelledby="h-local">
+      <div class="cushion" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="island">
+        <div class="ihead">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></div>
+          <div><h2 id="h-local">Sur ta machine</h2><p>Le modèle tourne sur ton ordinateur. Tes fichiers et tes demandes n’en sortent jamais.</p>
+            <div class="tags"><span class="tag">100 % local</span><span class="tag">Gratuit</span><span class="tag">Hors ligne</span></div></div>
+        </div>
+        <div class="grid" data-group="local"></div>
+      </div>
+    </section>
+
+    <section class="isle cloudg" aria-labelledby="h-cloud" style="--bd:-3.5s">
+      <div class="cushion" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="island" style="--bd:-3.5s">
+        <div class="ihead">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.34 9.5 4 4 0 0 0 7 19z"/></svg></div>
+          <div><h2 id="h-cloud">Dans le cloud</h2><p>Les modèles les plus puissants, via une clé API. Ta demande et les fichiers lus sont envoyés au fournisseur.</p>
+            <div class="tags"><span class="tag">En ligne</span><span class="tag">Clé API</span><span class="tag">Payant à l’usage</span></div></div>
+        </div>
+        <div class="grid" data-group="cloud"></div>
+      </div>
+    </section>
+
+    <section class="isle cli" aria-labelledby="h-cli">
+      <div class="cushion" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="island" style="--bd:-1.8s">
+        <div class="ihead">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4M12 16h7"/><rect x="2" y="3" width="20" height="18" rx="3"/></svg></div>
+          <div><h2 id="h-cli">Tes agents de code</h2><p>Les outils que tu utilises déjà, avec ton compte. Ils sont installés ici, mais leurs modèles tournent dans le cloud.</p>
+            <div class="tags"><span class="tag">Installé sur ta machine</span><span class="tag">Modèles en ligne</span><span class="tag">Ton abonnement</span></div></div>
+        </div>
+        <div class="grid" data-group="cli"></div>
+      </div>
+    </section>
   </div>
 
-  <h2>API cloud</h2>
-  <div class="grid" data-group="cloud"></div>
-  <h2>Modèles locaux</h2>
-  <div class="grid" data-group="local"></div>
-  <h2>Agents CLI</h2>
-  <div class="grid" data-group="cli"></div>
+  <footer><span>🔒 Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne passent jamais par le navigateur.</span></footer>
+</main>
 
-  <form id="form" hidden autocomplete="off">
+<div class="overlay" id="overlay">
+  <form id="form" hidden autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="f-title">
+    <button type="button" class="x" id="f-x" aria-label="Fermer">×</button>
+    <span class="tag kindtag" id="f-kind"></span>
     <h3 id="f-title"></h3>
     <div class="howto" id="f-howto"></div>
     <label for="f-label">Nom affiché</label>
@@ -113,7 +244,7 @@
       <button type="button" class="b danger" id="f-delete" hidden>Supprimer</button>
     </div>
   </form>
-</main>
+</div>
 <script>
 (() => {
   const TOKEN = document.querySelector('meta[name=lq-token]').content;
@@ -127,29 +258,44 @@
     if (!res.ok && !('ok' in data)) throw new Error(data.error || 'HTTP ' + res.status);
     return data;
   };
-  let K = {}, P = {}, D = null, det = null, status = {}, edit = null, models = [];
+  let K = {}, P = {}, D = null, det = null, status = {}, edit = null, models = [], lastFocus = null;
   const BASES = { ollama: 'http://127.0.0.1:11434', lmstudio: 'http://127.0.0.1:1234/v1', llamacpp: 'http://127.0.0.1:8080/v1', custom: 'http://127.0.0.1:8000/v1' };
+  const GROUP = { local: 'Sur ta machine', cloud: 'Dans le cloud', cli: 'Agent de code' };
   const extLink = d => d.url ? `<a class="ext" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url_label || 'Site')} ↗</a>` : '';
+
+  /* Nuages : trois couches (loin, milieu, près), placés au hasard, qui dérivent à des vitesses différentes */
+  (function sky() {
+    const layers = [[7, 0.55, 0.45, '7px', 150, 210], [5, 0.85, 0.7, '4px', 100, 150], [4, 1.25, 0.9, '2px', 70, 110]];
+    let html = '';
+    for (const [n, s, o, b, dmin, dmax] of layers) {
+      for (let i = 0; i < n; i++) {
+        const d = dmin + Math.random() * (dmax - dmin);
+        html += `<div class="cloud" style="--y:${(Math.random() * 92).toFixed(1)}%;--s:${(s * (0.75 + Math.random() * 0.6)).toFixed(2)};--o:${o};--b:${b};--d:${d.toFixed(0)}s;--dl:-${(Math.random() * d).toFixed(0)}s"></div>`;
+      }
+    }
+    $('#clouds').innerHTML = html;
+  })();
 
   async function refresh(recheck = true) {
     const r = await api('kinds');
     K = r.kinds; P = r.providers; D = r.default;
-    const onSite = r.mode !== 'hub';
-    if (onSite) $('#intro').innerHTML = `Choisis le modèle qui modifiera <code>${esc(r.root)}</code>${r.mode === 'proxy' ? ' (mode proxy)' : ''}.`;
-    $('#go').hidden = !Object.keys(P).length;
+    const onSite = r.mode !== 'hub', any = Object.keys(P).length > 0;
+    if (any) $('#headline').textContent = 'Tes fournisseurs';
+    if (onSite) $('#intro').innerHTML = `Choisis le modèle qui modifiera <code>${esc(r.root)}</code>${r.mode === 'proxy' ? ' (mode proxy)' : ''}. Tu peux en ajouter d’autres et en changer à tout moment depuis la barre.`;
+    $('#go').hidden = !any;
     $('#go').href = next.startsWith('/') && !next.startsWith('//') ? next : '/';
     $('#go').textContent = onSite ? 'Retour au site →' : 'Mes sites →';
     $('#hub').hidden = !(onSite && r.hub_url);
     if (r.hub_url) $('#hub').href = r.hub_url;
     if (recheck) status = {};
     renderCards();
-    if (recheck && Object.keys(P).length) { status = await api('status').catch(() => ({})); renderCards(); }
+    if (recheck && any) { status = await api('status').catch(() => ({})); renderCards(); }
   }
 
   /* État d'une carte : vérifiée (disponible / erreur), détectée sur la machine, ou à configurer */
   function detected(kind) {
     if (!det) return null;
-    if (kind === 'ollama') return det.ollama.up ? `Ollama tourne sur ce poste avec ${det.ollama.models.length} modèle(s). Clique pour l’activer.` : null;
+    if (kind === 'ollama') return det.ollama.up ? `Ollama tourne ici avec ${det.ollama.models.length} modèle(s). Clique pour l’activer.` : null;
     if (kind === 'lmstudio' || kind === 'llamacpp') return det[kind].up ? 'Serveur détecté sur ce poste. Clique pour l’activer.' : null;
     if (kind.startsWith('cli-')) return det.cli[kind.slice(4)] ? 'Installé sur ce poste. Clique pour l’activer.' : null;
     if (K[kind].env && det.env[kind]) return `Clé trouvée dans ${K[kind].env}. Clique pour l’activer.`;
@@ -157,8 +303,8 @@
   }
   function idle(kind) {
     const d = K[kind];
-    if (kind === 'custom') return 'Brancher un autre fournisseur : n’importe quelle API compatible OpenAI, locale ou distante.';
-    if (d.group === 'cloud') return 'Crée une clé API sur le site du fournisseur, puis clique ici pour la coller.';
+    if (kind === 'custom') return 'N’importe quel serveur compatible OpenAI : vLLM, LocalAI, Jan…';
+    if (d.group === 'cloud') return 'Crée une clé sur le site du fournisseur, puis clique ici.';
     if (d.group === 'local') return 'Installe-le et lance son serveur, puis clique ici.';
     return 'Installe le CLI et connecte-toi, puis clique ici.';
   }
@@ -214,12 +360,30 @@
     return `${esc(d.help)}. ${extLink(d)}`;
   }
 
+  /* La carte flottante */
+  function showForm() {
+    lastFocus = document.activeElement;
+    $('#form').hidden = false;
+    $('#overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function hideForm() {
+    $('#form').hidden = true;
+    $('#overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    edit = null;
+    renderCards();
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+
   function openForm(type, id) {
     const d = K[type], p = id ? P[id] : {};
     edit = { type, id: id || null };
     models = id ? (p.models || []).map(m => ({ ...m, shown: m.shown !== false })) : [];
     edit.default = id ? p.default_model : null;
-    $('#f-title').textContent = (id ? 'Modifier · ' + (p.label || d.label) : d.label + (type === 'custom' ? ' · fournisseur compatible OpenAI' : ''));
+    $('#f-kind').textContent = GROUP[d.group];
+    $('#f-kind').style.color = `var(--${{ local: 'local', cloud: 'cloudc', cli: 'cli' }[d.group]})`;
+    $('#f-title').textContent = (id ? 'Modifier · ' + (p.label || d.label) : d.label + (type === 'custom' ? ' · compatible OpenAI' : ''));
     $('#f-howto').innerHTML = howto(type);
     $('#f-label').value = p.label || '';
     let f = '';
@@ -233,15 +397,16 @@
     if (d.fields.includes('extra_models')) f += field('f-extra', 'Modèles en plus (séparés par des virgules, facultatif)', 'text', p.extra_models, type === 'cli-codex' ? 'ex. gpt-5.5, o4-mini' : 'ex. claude-opus-5-5');
     $('#f-fields').innerHTML = f;
     $('#f-adv').hidden = d.group === 'cli';
+    $('#f-adv').open = false;
     $('#f-toolmode').value = p.tool_mode || '';
     $('#f-vision').checked = !!(p.caps && p.caps.vision);
     $('#f-default').checked = !Object.keys(P).length || (D && D.provider === id);
     $('#f-delete').hidden = !id;
     $('#f-msg').textContent = ''; $('#f-msg').className = 'msg';
     $('#f-filter').value = '';
-    $('#form').hidden = false;
+    showForm();
     renderModels(); renderCards();
-    $('#form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#form').scrollTop = 0;
     // Détecté sur la machine (ou déjà configuré) : on teste tout de suite, un clic de moins
     if (id || detected(type)) $('#f-test').click(); else (($('#f-key') || $('#f-base') || $('#f-label')).focus());
   }
@@ -304,18 +469,21 @@
     try {
       const r = await api('providers/save', body);
       if (!r.ok) throw new Error(r.message);
-      $('#form').hidden = true; edit = null;
+      hideForm();
       await refresh();
       // Premier fournisseur enregistré : on enchaîne directement sur la page des sites (ou le site)
       if (first) { location.href = $('#go').href; return; }
       $('#go').focus();
     } catch (err) { msg.className = 'msg bad'; msg.textContent = '✗ ' + err.message; }
   });
-  $('#f-cancel').addEventListener('click', () => { $('#form').hidden = true; edit = null; renderCards(); });
+  $('#f-cancel').addEventListener('click', hideForm);
+  $('#f-x').addEventListener('click', hideForm);
+  $('#overlay').addEventListener('mousedown', e => { if (e.target === e.currentTarget) hideForm(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#form').hidden) hideForm(); });
   $('#f-delete').addEventListener('click', async () => {
     if (!edit.id || !confirm('Supprimer ce fournisseur (et sa clé) ?')) return;
     await api('providers/delete', { id: edit.id });
-    $('#form').hidden = true; edit = null; refresh();
+    hideForm(); refresh();
   });
 
   const pick = e => {
