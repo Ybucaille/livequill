@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LiveQuill — edit your local site by asking</title>
+<meta name="description" content="A floating prompt bar for any local website. Type a change, any model edits your real files, and the page reloads. Works with Claude, GPT, Gemini, Ollama and more.">
+<meta property="og:title" content="LiveQuill — edit your local site by asking">
+<meta property="og:description" content="A floating prompt bar for any local website. Any model edits your real files, the page reloads.">
+<meta property="og:image" content="assets/images/hero.jpg">
+<meta name="theme-color" content="#1f1e1d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d97757'/%3E%3Cpath d='M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root{--bg:#1b1a19;--bg2:#232220;--card:#262624;--line:#363532;--ink:#efede7;--soft:#c3c0b7;--mute:#8f8d86;--acc:#d97757;--acc2:#f0a37f;--ok:#7fc49a;--code:#141312}
+  @media (prefers-color-scheme: light){:root{--bg:#faf9f5;--bg2:#f1efe8;--card:#ffffff;--line:#e3e0d6;--ink:#1f1e1d;--soft:#4d4b46;--mute:#7c7a73;--acc:#c6613f;--acc2:#b5532f;--ok:#2f8a57;--code:#1f1e1d}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header.top{position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+  header.top .wrap{display:flex;align-items:center;gap:22px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;text-decoration:none}
+  .brand svg{width:28px;height:28px}
+  header nav{display:flex;gap:20px;flex:1;font-size:15px;color:var(--soft)}
+  header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;cursor:pointer}
+  .btn:hover{border-color:var(--mute)}
+  .btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}.btn.pri:hover{filter:brightness(1.08)}
+  .btn svg{width:18px;height:18px}
+  .hero{padding:84px 0 40px;text-align:center}
+  .pill{display:inline-block;padding:5px 13px;border:1px solid var(--line);border-radius:999px;color:var(--soft);font-size:14px;margin-bottom:22px}
+  .pill b{color:var(--acc2);font-weight:600}
+  h1{margin:0 auto;max-width:820px;font-size:clamp(38px,6vw,64px);line-height:1.05;letter-spacing:-.025em}
+  h1 em{font-style:normal;color:var(--acc)}
+  .lead{max-width:640px;margin:22px auto 30px;color:var(--soft);font-size:clamp(17px,2.2vw,20px)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .video{margin:48px auto 0;max-width:1000px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#000;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .video video{display:block;width:100%;height:auto}
+  .caption{margin-top:12px;color:var(--mute);font-size:14px;text-align:center}
+  section{padding:70px 0;scroll-margin-top:60px}
+  h2{margin:0 0 10px;font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;text-align:center}
+  .sub{max-width:620px;margin:0 auto 40px;color:var(--soft);text-align:center}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .f{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+  .f .i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);margin-bottom:12px}
+  .f .i svg{width:20px;height:20px}
+  .f h3{margin:0 0 6px;font-size:17px}
+  .f p{margin:0;color:var(--soft);font-size:15px}
+  .shots{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  figure{margin:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
+  figure img{display:block;width:100%;height:auto;border-bottom:1px solid var(--line)}
+  figcaption{padding:14px 16px;color:var(--soft);font-size:15px}
+  figcaption b{color:var(--ink)}
+  .providers{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:820px;margin:0 auto}
+  .providers span{padding:9px 15px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:15px}
+  .providers span i{font-style:normal;color:var(--mute);font-size:13px;margin-left:6px}
+  .start{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start}
+  .steps{list-style:none;margin:0;padding:0;counter-reset:s}
+  .steps li{position:relative;padding:0 0 22px 46px;color:var(--soft)}
+  .steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:#fff;font-weight:700;font-size:14px}
+  .steps b{color:var(--ink)}
+  pre{position:relative;margin:0;padding:18px 20px;border-radius:14px;background:var(--code);color:#e8e6df;font:14.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-x:auto;border:1px solid var(--line)}
+  pre .c{color:#8a877d}
+  .copy{position:absolute;top:10px;right:10px;padding:5px 10px;border-radius:8px;border:1px solid #3a3936;background:#2a2927;color:#d8d5cc;font:12px system-ui,sans-serif;cursor:pointer}
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .trust div{padding:18px;border-left:3px solid var(--acc);background:var(--bg2);border-radius:0 12px 12px 0}
+  .trust b{display:block;margin-bottom:4px}
+  .trust span{color:var(--soft);font-size:14.5px}
+  footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+  footer .wrap{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between}
+  footer a{color:var(--soft)}
+  @media (max-width:860px){.grid{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr 1fr}.start{grid-template-columns:1fr}}
+  @media (max-width:620px){header nav{display:none}.grid,.shots,.trust{grid-template-columns:1fr}.hero{padding-top:56px}section{padding:52px 0}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#d97757"/><path d="M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z" fill="#fff"/></svg>LiveQuill</a>
+  <nav><a href="#features">Features</a><a href="#providers">Providers</a><a href="#start">Get started</a><a href="#security">Security</a></nav>
+  <a class="btn" href="https://github.com/Ybucaille/livequill"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.2-3.1-.1-.4-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.1 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>GitHub</a>
+</div></header>
+
+<main>
+  <div class="wrap hero">
+    <span class="pill"><b>Open source</b> · zero dependencies · runs on your machine</span>
+    <h1>Edit your local site <em>by asking</em></h1>
+    <p class="lead">A floating prompt bar for any local website. Type a change, the model of your choice edits your real files, and the page reloads.</p>
+    <div class="cta">
+      <a class="btn pri" href="#start">Get started</a>
+      <a class="btn" href="https://github.com/Ybucaille/livequill">View on GitHub</a>
+    </div>
+    <div class="video">
+      <video src="assets/demo.mp4" poster="assets/images/hero.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="LiveQuill demo"></video>
+    </div>
+    <p class="caption">A real, unedited first run: setup, add a site, ask for a change, undo, switch theme.</p>
+  </div>
+
+  <section id="features"><div class="wrap">
+    <h2>Everything stays where it belongs</h2>
+    <p class="sub">Your files, your models, your browser. LiveQuill only adds a bar on top, and nothing is written to your project to make it appear.</p>
+    <div class="grid">
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16M6 16l9-9 3 3-9 9H6z"/></svg></div><h3>Real file edits</h3><p>The model searches, reads and edits the project with sandboxed tools, then the page reloads on its own.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><h3>One-click undo</h3><p>Every file is backed up before it is touched. Undo restores the last request, even for CLI agents.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div><h3>Live answers</h3><p>The panel streams what the model says, the tools it calls and the files it changes.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg></div><h3>All your sites</h3><p>A dashboard lists your projects. Serve a folder as-is, or sit in front of Vite, Next or Astro.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 0 1 0 18M3 12h18"/></svg></div><h3>Any model</h3><p>Switch between cloud APIs, local models and CLI agents from the same menu, without restarting.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-1.7a1.8 1.8 0 0 0-1.3 3.1A1.6 1.6 0 0 1 12 22z"/></svg></div><h3>Looks like home</h3><p>Claude, ChatGPT, Gemini and Minimal themes, in light and dark, following your system.</p></div>
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="shots">
+      <figure><img src="assets/images/hub.jpg" alt="Sites dashboard" loading="lazy"><figcaption><b>Your sites.</b> Add a project folder once, open it with the bar whenever you need it.</figcaption></figure>
+      <figure><img src="assets/images/setup.jpg" alt="Provider setup page" loading="lazy"><figcaption><b>Setup in a minute.</b> Detected providers are one click away, and each connection is checked live.</figcaption></figure>
+      <figure><img src="assets/images/models.png" alt="Model menu grouped by provider" loading="lazy"><figcaption><b>Every model in one menu.</b> Reasoning and Fast only show up when the model supports them.</figcaption></figure>
+      <figure><img src="assets/images/themes.png" alt="Bar themes" loading="lazy"><figcaption><b>Four themes.</b> Pick the one that feels like the assistant you already use.</figcaption></figure>
+    </div>
+  </div></section>
+
+  <section id="providers"><div class="wrap">
+    <h2>Bring your own model</h2>
+    <p class="sub">Cloud, local or the coding agent you already pay for. Adding a provider is one adapter file.</p>
+    <div class="providers">
+      <span>Anthropic</span><span>OpenAI</span><span>Google Gemini</span><span>Mistral</span><span>OpenRouter</span>
+      <span>Ollama<i>local</i></span><span>LM Studio<i>local</i></span><span>llama.cpp<i>local</i></span><span>Any OpenAI-compatible API</span>
+      <span>Claude Code<i>CLI</i></span><span>Codex<i>CLI</i></span><span>Gemini CLI<i>CLI</i></span>
+    </div>
+  </div></section>
+
+  <section id="start"><div class="wrap">
+    <h2>Get started in a minute</h2>
+    <p class="sub">Python 3.9+ and nothing else. No build step, no package to install in your project.</p>
+    <div class="start">
+      <ol class="steps">
+        <li><b>Clone and run.</b> The first launch opens the setup page in your browser.</li>
+        <li><b>Pick a provider.</b> Paste an API key, or use Ollama or a CLI agent detected on your machine.</li>
+        <li><b>Add a site.</b> Choose a project folder, or the URL of your dev server.</li>
+        <li><b>Open it and ask.</b> “Make the hero title red.” Watch it change, undo if you don’t like it.</li>
+      </ol>
+      <pre id="code"><button class="copy" type="button">Copy</button><span class="c"># get LiveQuill</span>
+git clone https://github.com/Ybucaille/livequill.git
+cd livequill
+
+<span class="c"># start the dashboard</span>
+./bin/livequill
+
+<span class="c"># or open a project directly</span>
+./bin/livequill ~/projects/my-site
+./bin/livequill --proxy http://localhost:5173 ~/projects/my-app</pre>
+    </div>
+  </div></section>
+
+  <section id="security"><div class="wrap">
+    <h2>Local first, locked down</h2>
+    <p class="sub">LiveQuill lets a model touch your files, so the guard rails are not optional.</p>
+    <div class="trust">
+      <div><b>127.0.0.1 only</b><span>Session token, same-origin checks and Host validation on every API call.</span></div>
+      <div><b>Keys stay server-side</b><span>Stored with 600 permissions, never sent to the browser, masked in errors.</span></div>
+      <div><b>Sandboxed tools</b><span>No path outside the project, no .git, .env or node_modules, no shell.</span></div>
+      <div><b>Backups first</b><span>Every change is saved before it happens, so Undo always works.</span></div>
+    </div>
+  </div></section>
+</main>
+
+<footer><div class="wrap">
+  <span>LiveQuill · MIT License</span>
+  <span><a href="https://github.com/Ybucaille/livequill">GitHub</a> · <a href="https://github.com/Ybucaille/livequill/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="https://github.com/Ybucaille/livequill/issues">Issues</a></span>
+</div></footer>
+
+<script>
+  document.querySelector('.copy').addEventListener('click', e => {
+    const text = document.getElementById('code').innerText.replace(/^Copy\n?/, '');
+    navigator.clipboard.writeText(text.split('\n').filter(l => !l.startsWith('#')).join('\n').trim()).then(() => {
+      e.target.textContent = 'Copied'; setTimeout(() => (e.target.textContent = 'Copy'), 1500);
+    });
+  });
+</script>
+</body>
+</html>
