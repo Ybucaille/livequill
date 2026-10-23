@@ -26,7 +26,7 @@ jobs:
           cp -r site/. _site/
           cp docs/demo.mp4 _site/assets/
           cp -r docs/images _site/assets/images
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
