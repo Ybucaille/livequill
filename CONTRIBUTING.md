@@ -1,10 +1,10 @@
-# Contributing to livequill
+# Contributing to LiveQuill
 
 Thanks for taking the time to contribute! Bug reports, new provider adapters, themes and translations are all welcome.
 
 ## Ground rules
 
-- **Zero runtime dependencies.** livequill only uses the Python standard library (3.9+), plus plain JavaScript and CSS in the browser. Please do not add packages.
+- **Zero runtime dependencies.** LiveQuill only uses the Python standard library (3.9+), plus plain JavaScript and CSS in the browser. Please do not add packages.
 - **Security first.** API keys must never reach the browser or the logs. File access must go through `Project.resolve()`. New `/__lq/` routes must check the session token and the origin.
 - **No real network calls in tests.** Use `tests/helpers.FakeTransport` to replay provider responses.
 - Match the surrounding style: small functions, short comments that explain *why*, no reformatting of unrelated code.

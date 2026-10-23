@@ -1,6 +1,6 @@
 <div align="center">
 
-# livequill
+# LiveQuill
 
 **A floating prompt bar for any local website. Type a change, any model edits your real files, and the page reloads.**
 
@@ -11,7 +11,7 @@
 [![Providers](https://img.shields.io/badge/providers-12-d97757)](#providers)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](CONTRIBUTING.md)
 
-<a href="docs/demo.mp4"><img src="docs/demo.gif" alt="livequill demo: a request typed in the floating bar turns the title red, then Undo restores it and the theme switches to ChatGPT light" width="880"></a>
+<a href="docs/demo.mp4"><img src="docs/demo.gif" alt="LiveQuill demo: a request typed in the floating bar turns the title red, then Undo restores it and the theme switches to ChatGPT light" width="880"></a>
 
 <sub>A real, unedited run: Claude Code (Haiku) edits <code>index.html</code>, the page reloads by itself, then <b>Undo</b> restores it, and the bar switches theme. <a href="docs/demo.mp4">Watch in MP4</a>.</sub>
 
@@ -21,7 +21,7 @@
 
 ## Why
 
-Dev servers already reload when files change. The missing piece is asking for the change **from the page you are looking at**. livequill adds a small prompt bar to any local site, sends your request and the page context to the model of your choice, runs the model's file edits inside the project folder, and reloads.
+Dev servers already reload when files change. The missing piece is asking for the change **from the page you are looking at**. LiveQuill adds a small prompt bar to any local site, sends your request and the page context to the model of your choice, runs the model's file edits inside the project folder, and reloads.
 
 - **Any model**: Anthropic, OpenAI, Gemini, Mistral, OpenRouter, Ollama, LM Studio, llama.cpp, any OpenAI-compatible endpoint, or the Claude Code / Codex / Gemini CLIs you already use.
 - **Its own agent loop**: no external session to keep open. The tool calls the model, runs the tools it asks for, and loops until the model is done.
@@ -39,6 +39,7 @@ Dev servers already reload when files change. The missing piece is asking for th
 - [How it works](#how-it-works)
 - [Adding a provider](#adding-a-provider)
 - [Development](#development)
+- [FAQ](#faq)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -133,7 +134,7 @@ API keys already set in your environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 
 | | Static folder | Proxy (`--proxy`) |
 |---|---|---|
-| Who serves the site | livequill | Your dev server (Vite, Next…) |
+| Who serves the site | LiveQuill | Your dev server (Vite, Next…) |
 | Where the bar is added | Every `.html` file served | Every `text/html` response |
 | Reload | File watcher, plus a reload when each request finishes | Your HMR, plus a reload when each request finishes |
 | WebSockets (HMR) | — | Passed through untouched |
@@ -170,7 +171,7 @@ demo/             demo page
 ```mermaid
 sequenceDiagram
     participant B as Floating bar
-    participant S as livequill server
+    participant S as LiveQuill server
     participant M as Model (API / local / CLI)
     participant F as Project files
     B->>S: POST /__lq/api/prompt (text, page, attachments)
@@ -227,6 +228,38 @@ To re-record the demo video, run a provider-backed instance, then the recorder (
 ./bin/livequill demo --port 8792 --no-open &
 node scripts/record-demo.mjs --url http://127.0.0.1:8792/ --model cli-claude::haiku --out docs/demo
 ```
+
+## FAQ
+
+<details>
+<summary><b>Why the name LiveQuill?</b></summary>
+
+A quill is the pen you write and correct a page with. With LiveQuill you write the change on the page itself, and the model rewrites the source **live**, while you watch. The name is short, provider-neutral, and easy to type as a command: `livequill`.
+</details>
+
+<details>
+<summary><b>Does my code leave my machine?</b></summary>
+
+Only if you choose a cloud provider. With Ollama, LM Studio or llama.cpp, everything stays local: the server listens on `127.0.0.1` and the model runs on your computer. With a cloud API, the request, the page context and the files the model reads are sent to that provider, as with any coding assistant.
+</details>
+
+<details>
+<summary><b>Can I use it without an API key?</b></summary>
+
+Yes. Install [Ollama](https://ollama.com/download), pull a model that supports tools (`ollama pull qwen2.5:7b-instruct`) and LiveQuill detects it on the setup page. If you already use Claude Code or Codex, LiveQuill can also delegate to them with your existing login.
+</details>
+
+<details>
+<summary><b>Does it work with React, Vue, Svelte or Next.js?</b></summary>
+
+Yes, with proxy mode: keep your dev server running and start `livequill --proxy http://localhost:5173 ./my-project`. LiveQuill adds the bar to the HTML responses and passes HMR WebSockets through, while the model edits your components in the project folder.
+</details>
+
+<details>
+<summary><b>What if the model breaks something?</b></summary>
+
+Click **Undo** (↶) in the bar: the files changed by the last request are restored from the backup taken before the edit. You can undo several requests in a row. Backups live in `<project>/.livequill/history/`, which ignores itself in git.
+</details>
 
 ## Contributing
 
