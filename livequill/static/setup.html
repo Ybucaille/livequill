@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lq-token" content="__LQ_TOKEN__">
+<title>livequill · réglages</title>
+<style>
+  :root{--bg:#1f1e1d;--card:#262624;--line:#3a3a3a;--ink:#eceae4;--mute:#8f8d86;--soft:#b9b6ad;--acc:#d97757;--acc2:#f0a37f;--ok:#7fc49a;--warn:#e3b65a;--bad:#ff8a7a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:900px;margin:0 auto;padding:32px 16px 80px}
+  h1{font-size:24px;margin:0 0 4px;font-weight:600}
+  h2{font-size:13px;margin:30px 0 10px;color:var(--mute);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+  p{margin:0 0 8px;color:var(--soft)}
+  code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc2)}
+  a{color:var(--acc2)}
+  .top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  .go{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:var(--acc);color:#fff;text-decoration:none;font-weight:500;white-space:nowrap}
+  .go:hover{background:#e0896b}.go[hidden]{display:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .card{position:relative;display:flex;flex-direction:column;gap:4px;min-height:118px;padding:14px 14px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;outline:0}
+  .card:hover,.card:focus-visible,.card.sel{border-color:var(--acc)}
+  .card .kh{display:flex;align-items:center;gap:10px;padding-right:2px}
+  .card .kh b{flex:1;font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{flex:none;width:14px;height:14px;border-radius:50%;border:1.5px solid var(--mute)}
+  .st-ok .dot{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 3px rgba(127,196,154,.15)}
+  .st-found .dot{border-color:var(--warn);background:rgba(227,182,90,.25)}
+  .st-bad .dot{background:var(--bad);border-color:var(--bad)}
+  .st-check .dot{border-color:var(--soft);border-top-color:transparent;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .state{font-size:13px;font-weight:500;color:var(--mute)}
+  .st-ok .state{color:var(--ok)}.st-found .state{color:var(--warn)}.st-bad .state{color:var(--bad)}
+  .card small{color:var(--mute);font-size:12.5px;line-height:1.4}
+  .card .ext{margin-top:auto;padding-top:4px;font-size:12.5px;width:max-content}
+  .badge{position:absolute;right:12px;bottom:10px;font-size:11px;color:var(--acc2)}
+  .card.add .dot{border-style:dashed}
+  form{margin-top:16px;padding:18px;border:1px solid var(--acc);border-radius:14px;background:var(--card)}
+  form[hidden]{display:none}
+  form h3{margin:0 0 4px;font-size:17px;font-weight:600}
+  .howto{margin:6px 0 2px;padding:10px 12px;border-radius:10px;background:#1f1e1d;font-size:13.5px;color:var(--soft)}
+  .howto a{font-weight:500}
+  label{display:block;margin:12px 0 4px;font-size:13px;color:var(--soft)}
+  input[type=text],input[type=password],input[type=url],input[type=number],input[type=search],select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#1f1e1d;color:var(--ink);font:inherit}
+  input:focus,select:focus{outline:2px solid #6b4130;border-color:var(--acc)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .row .sp{flex:1}
+  .check{display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--soft);font-size:13.5px}
+  .check label{margin:0}
+  button.b{padding:9px 14px;border:1px solid var(--line);border-radius:9px;background:#30302e;color:var(--ink);cursor:pointer;font:inherit}
+  button.b:hover{background:#3a3936}
+  button.b.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.b.pri:hover{background:#e0896b}
+  button.b.danger{color:var(--bad)}
+  button.b:disabled{opacity:.45;cursor:default}
+  button.b[hidden]{display:none}
+  .msg{font-size:13.5px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+  .models{margin-top:12px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .models[hidden]{display:none}
+  .models{scrollbar-width:thin;scrollbar-color:#4a4945 transparent}
+  .models::-webkit-scrollbar{width:10px}
+  .models::-webkit-scrollbar-thumb{background:#4a4945;border-radius:10px;border:3px solid var(--card)}
+  .models::-webkit-scrollbar-button{display:none}
+  .m{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:7px 12px;border-top:1px solid #2f2f2d;font-size:13.5px}
+  .m:first-child{border-top:0}
+  .m small{color:var(--mute);font-size:12px}
+  .m .def{font-size:12px;color:var(--mute);display:flex;gap:5px;align-items:center;margin:0}
+  details{margin-top:12px;color:var(--soft);font-size:13.5px}
+  details[hidden]{display:none}
+  summary{cursor:pointer;color:var(--mute)}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <h1>livequill</h1>
+      <p>Choisis le modèle qui modifiera <code id="root"></code>. Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne sont jamais envoyées au navigateur.</p>
+    </div>
+    <a class="go" id="go" href="/" hidden>Ouvrir le site →</a>
+  </div>
+
+  <h2>API cloud</h2>
+  <div class="grid" data-group="cloud"></div>
+  <h2>Modèles locaux</h2>
+  <div class="grid" data-group="local"></div>
+  <h2>Agents CLI</h2>
+  <div class="grid" data-group="cli"></div>
+
+  <form id="form" hidden autocomplete="off">
+    <h3 id="f-title"></h3>
+    <div class="howto" id="f-howto"></div>
+    <label for="f-label">Nom affiché</label>
+    <input type="text" id="f-label" placeholder="ex. Ollama du portable">
+    <div id="f-fields"></div>
+    <details id="f-adv"><summary>Avancé</summary>
+      <label for="f-toolmode">Appels d’outils</label>
+      <select id="f-toolmode"><option value="">Automatique (tool calls natifs si le modèle les gère)</option><option value="text">Mode texte (blocs fichier/diff, pour les modèles sans tool calls)</option></select>
+      <div class="check"><input type="checkbox" id="f-vision"><label for="f-vision">Forcer la vision (envoyer les images au modèle)</label></div>
+    </details>
+    <div class="row">
+      <button type="button" class="b" id="f-test">Tester la connexion</button>
+      <span class="msg" id="f-msg" role="status"></span>
+    </div>
+    <input type="search" id="f-filter" placeholder="Filtrer les modèles…" hidden style="margin-top:12px">
+    <div class="models" id="f-models" hidden></div>
+    <div class="check"><input type="checkbox" id="f-default"><label for="f-default">Fournisseur par défaut dans la barre</label></div>
+    <div class="row">
+      <button type="submit" class="b pri" id="f-save" disabled>Enregistrer</button>
+      <button type="button" class="b" id="f-cancel">Fermer</button>
+      <span class="sp"></span>
+      <button type="button" class="b danger" id="f-delete" hidden>Supprimer</button>
+    </div>
+  </form>
+</main>
+<script>
+(() => {
+  const TOKEN = document.querySelector('meta[name=lq-token]').content;
+  const next = new URLSearchParams(location.search).get('next') || '/';
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const api = async (path, body) => {
+    const res = await fetch('/__lq/api/' + path, body === undefined ? { headers: { 'X-LQ-Token': TOKEN } } :
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-LQ-Token': TOKEN }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok && !('ok' in data)) throw new Error(data.error || 'HTTP ' + res.status);
+    return data;
+  };
+  let K = {}, P = {}, D = null, det = null, status = {}, edit = null, models = [];
+  const BASES = { ollama: 'http://127.0.0.1:11434', lmstudio: 'http://127.0.0.1:1234/v1', llamacpp: 'http://127.0.0.1:8080/v1', custom: 'http://127.0.0.1:8000/v1' };
+  const extLink = d => d.url ? `<a class="ext" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url_label || 'Site')} ↗</a>` : '';
+
+  async function refresh(recheck = true) {
+    const r = await api('kinds');
+    K = r.kinds; P = r.providers; D = r.default;
+    $('#root').textContent = r.root + (r.mode === 'proxy' ? ' (mode proxy)' : '');
+    $('#go').hidden = !Object.keys(P).length;
+    $('#go').href = next.startsWith('/') && !next.startsWith('//') ? next : '/';
+    if (recheck) status = {};
+    renderCards();
+    if (recheck && Object.keys(P).length) { status = await api('status').catch(() => ({})); renderCards(); }
+  }
+
+  /* État d'une carte : vérifiée (disponible / erreur), détectée sur la machine, ou à configurer */
+  function detected(kind) {
+    if (!det) return null;
+    if (kind === 'ollama') return det.ollama.up ? `Ollama tourne sur ce poste avec ${det.ollama.models.length} modèle(s). Clique pour l’activer.` : null;
+    if (kind === 'lmstudio' || kind === 'llamacpp') return det[kind].up ? 'Serveur détecté sur ce poste. Clique pour l’activer.' : null;
+    if (kind.startsWith('cli-')) return det.cli[kind.slice(4)] ? 'Installé sur ce poste. Clique pour l’activer.' : null;
+    if (K[kind].env && det.env[kind]) return `Clé trouvée dans ${K[kind].env}. Clique pour l’activer.`;
+    return null;
+  }
+  function idle(kind) {
+    const d = K[kind];
+    if (kind === 'custom') return 'Brancher un autre fournisseur : n’importe quelle API compatible OpenAI, locale ou distante.';
+    if (d.group === 'cloud') return 'Crée une clé API sur le site du fournisseur, puis clique ici pour la coller.';
+    if (d.group === 'local') return 'Installe-le et lance son serveur, puis clique ici.';
+    return 'Installe le CLI et connecte-toi, puis clique ici.';
+  }
+
+  function cardHtml(kind, pid) {
+    const d = K[kind], p = pid ? P[pid] : null;
+    let st, label, text;
+    if (p) {
+      const s = status[pid], n = (p.models || []).filter(m => m.shown !== false).length;
+      if (!s) { st = 'check'; label = 'Vérification…'; text = 'Connexion en cours au fournisseur.'; }
+      else if (s.ok) { st = 'ok'; label = 'Disponible'; text = `${n} modèle(s) dans la barre · défaut : ${p.default_model}`; }
+      else { st = 'bad'; label = 'Connexion impossible'; text = s.message; }
+    } else {
+      const found = detected(kind);
+      st = found ? 'found' : 'idle';
+      label = found ? 'Détecté' : { cloud: 'Non configuré', local: 'Non détecté', cli: 'Non installé' }[d.group];
+      if (kind === 'custom') label = 'Ajouter';
+      text = found || idle(kind);
+    }
+    const title = p ? (p.label || d.label) : d.label;
+    const isDef = p && D && D.provider === pid;
+    return `<div class="card st-${st} ${kind === 'custom' && !p ? 'add' : ''} ${edit && edit.type === kind && edit.id === (pid || null) ? 'sel' : ''}" role="button" tabindex="0"
+        data-kind="${kind}" data-pid="${esc(pid || '')}" aria-label="${esc(title)} : ${esc(label)}">
+      <div class="kh"><b>${esc(title)}</b><span class="dot" aria-hidden="true"></span></div>
+      <div class="state">${esc(label)}</div>
+      <small>${esc(text)}</small>
+      ${!p && st === 'idle' ? extLink(d) : ''}
+      ${isDef ? '<span class="badge">par défaut</span>' : ''}</div>`;
+  }
+
+  function renderCards() {
+    for (const grid of document.querySelectorAll('.grid')) {
+      const g = grid.dataset.group;
+      let html = '';
+      for (const [k, d] of Object.entries(K)) {
+        if (d.group !== g) continue;
+        const pids = Object.keys(P).filter(id => P[id].type === k);
+        html += pids.map(id => cardHtml(k, id)).join('');
+        if (!pids.length || d.multi) html += cardHtml(k, null);   // « Autre » reste toujours proposé
+      }
+      grid.innerHTML = html;
+    }
+  }
+
+  function field(id, label, type, value, ph) {
+    return `<label for="${id}">${label}</label><input type="${type}" id="${id}" value="${esc(value || '')}" placeholder="${esc(ph || '')}" spellcheck="false">`;
+  }
+
+  function howto(type) {
+    const d = K[type];
+    if (d.group === 'cloud') return `1. ${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">Ouvre la page des clés ${esc(d.label)} ↗</a>` : ''} et connecte-toi.<br>2. Crée une clé, colle-la ci-dessous, puis teste la connexion.`;
+    if (d.group === 'cli') return `${esc(d.help)}.<br>Pas encore connecté ? Lance <code>${esc(d.login)}</code> dans un terminal. ${extLink(d)}`;
+    return `${esc(d.help)}. ${extLink(d)}`;
+  }
+
+  function openForm(type, id) {
+    const d = K[type], p = id ? P[id] : {};
+    edit = { type, id: id || null };
+    models = id ? (p.models || []).map(m => ({ ...m, shown: m.shown !== false })) : [];
+    edit.default = id ? p.default_model : null;
+    $('#f-title').textContent = (id ? 'Modifier · ' + (p.label || d.label) : d.label + (type === 'custom' ? ' · fournisseur compatible OpenAI' : ''));
+    $('#f-howto').innerHTML = howto(type);
+    $('#f-label').value = p.label || '';
+    let f = '';
+    if (d.fields.includes('base_url')) f += field('f-base', 'URL de base', 'url', p.base_url, BASES[type] || '');
+    if (d.fields.includes('key')) {
+      f += field('f-key', `Clé API${type === 'custom' ? ' (facultative)' : ''}`, 'password', '', p.has_key ? '•••••••• enregistrée — laisser vide pour la garder' : 'colle ta clé ici');
+      if (d.env && det && det.env[type]) f += `<div class="check"><input type="checkbox" id="f-env" ${p.api_key_env || !id ? 'checked' : ''}><label for="f-env">Utiliser la variable d’environnement <code>${esc(d.env)}</code></label></div>`;
+    }
+    if (d.fields.includes('model')) f += field('f-model', 'Nom du modèle (si le serveur ne liste pas ses modèles)', 'text', p.model, 'ex. llama-3.3-70b');
+    if (d.fields.includes('num_ctx')) f += field('f-ctx', 'Taille du contexte (num_ctx)', 'number', p.num_ctx || 16384, '16384');
+    if (d.fields.includes('extra_models')) f += field('f-extra', 'Modèles en plus (séparés par des virgules, facultatif)', 'text', p.extra_models, type === 'cli-codex' ? 'ex. gpt-5.5, o4-mini' : 'ex. claude-opus-5-5');
+    $('#f-fields').innerHTML = f;
+    $('#f-adv').hidden = d.group === 'cli';
+    $('#f-toolmode').value = p.tool_mode || '';
+    $('#f-vision').checked = !!(p.caps && p.caps.vision);
+    $('#f-default').checked = !Object.keys(P).length || (D && D.provider === id);
+    $('#f-delete').hidden = !id;
+    $('#f-msg').textContent = ''; $('#f-msg').className = 'msg';
+    $('#f-filter').value = '';
+    $('#form').hidden = false;
+    renderModels(); renderCards();
+    $('#form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Détecté sur la machine (ou déjà configuré) : on teste tout de suite, un clic de moins
+    if (id || detected(type)) $('#f-test').click(); else (($('#f-key') || $('#f-base') || $('#f-label')).focus());
+  }
+
+  function formBody() {
+    const v = s => { const el = $(s); return el ? el.value.trim() : ''; };
+    const b = { id: edit.id, type: edit.type, label: v('#f-label'), base_url: v('#f-base'), api_key: v('#f-key'), model: v('#f-model'),
+      extra_models: v('#f-extra'), num_ctx: v('#f-ctx') ? +v('#f-ctx') : '', tool_mode: $('#f-toolmode').value };
+    if ($('#f-env') && $('#f-env').checked) { b.api_key_env = K[edit.type].env; b.api_key = ''; }
+    if ($('#f-vision').checked) b.caps = { vision: true };
+    return b;
+  }
+
+  function renderModels() {
+    const box = $('#f-models'), q = $('#f-filter').value.toLowerCase();
+    $('#f-save').disabled = !models.length;
+    box.hidden = !models.length; $('#f-filter').hidden = models.length < 12;
+    if (!edit.default || !models.some(m => m.id === edit.default)) edit.default = (models.find(m => m.shown) || models[0] || {}).id;
+    box.innerHTML = models.map((m, i) => (q && !(m.id + m.label).toLowerCase().includes(q)) ? '' :
+      `<div class="m"><input type="checkbox" data-i="${i}" ${m.shown ? 'checked' : ''} aria-label="Afficher ${esc(m.label)} dans la barre">
+        <span>${esc(m.label)} ${m.label.startsWith(m.id) ? '' : `<small>${esc(m.id)}</small>`}</span>
+        <small>${[m.caps && m.caps.tools === false ? 'sans tools → mode texte' : '', m.caps && m.caps.vision ? 'vision' : '', m.caps && m.caps.effort ? 'réflexion' : '', m.caps && m.caps.fast ? 'fast' : ''].filter(Boolean).join(' · ')}</small>
+        <label class="def"><input type="radio" name="def" data-i="${i}" ${m.id === edit.default ? 'checked' : ''}>défaut</label></div>`).join('');
+  }
+
+  $('#f-models').addEventListener('change', e => {
+    const i = +e.target.dataset.i;
+    if (e.target.type === 'checkbox') models[i].shown = e.target.checked;
+    else { edit.default = models[i].id; models[i].shown = true; }
+    renderModels();
+  });
+  $('#f-filter').addEventListener('input', renderModels);
+
+  $('#f-test').addEventListener('click', async () => {
+    const btn = $('#f-test'), msg = $('#f-msg');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Test en cours…';
+    try {
+      const r = await api('providers/test', formBody());
+      msg.className = 'msg ' + (r.ok ? 'ok' : 'bad'); msg.textContent = (r.ok ? '✓ Disponible · ' : '✗ ') + r.message;
+      if (r.ok) {
+        const prev = Object.fromEntries(models.map(m => [m.id, m.shown]));
+        const few = r.models.length <= 12;
+        models = r.models.map(m => ({ ...m, shown: m.id in prev ? prev[m.id] : few }));
+        if (!models.some(m => m.shown) && models.length) {
+          const pref = models.find(m => /qwen2\.5|qwen3|llama3\.[123]|opus-5-5|gpt-5|gemini-2\.5-flash|mistral-large|default/.test(m.id)) || models[0];
+          pref.shown = true; edit.default = pref.id;
+        }
+        renderModels();
+      }
+    } catch (e) { msg.className = 'msg bad'; msg.textContent = '✗ ' + e.message; }
+    btn.disabled = false;
+  });
+
+  $('#form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('#f-msg');
+    const body = { ...formBody(), models: models.map(({ id, label, meta, shown }) => ({ id, label, meta, shown })), default_model: edit.default,
+      make_default: $('#f-default').checked };
+    try {
+      const r = await api('providers/save', body);
+      if (!r.ok) throw new Error(r.message);
+      $('#form').hidden = true; edit = null;
+      await refresh();
+      $('#go').focus();
+    } catch (err) { msg.className = 'msg bad'; msg.textContent = '✗ ' + err.message; }
+  });
+  $('#f-cancel').addEventListener('click', () => { $('#form').hidden = true; edit = null; renderCards(); });
+  $('#f-delete').addEventListener('click', async () => {
+    if (!edit.id || !confirm('Supprimer ce fournisseur (et sa clé) ?')) return;
+    await api('providers/delete', { id: edit.id });
+    $('#form').hidden = true; edit = null; refresh();
+  });
+
+  const pick = e => {
+    if (e.target.closest('a')) return;             // le lien « Créer une clé ↗ » s'ouvre sans ouvrir le formulaire
+    const c = e.target.closest('.card'); if (!c) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    openForm(c.dataset.kind, c.dataset.pid || null);
+  };
+  for (const g of document.querySelectorAll('.grid')) { g.addEventListener('click', pick); g.addEventListener('keydown', pick); }
+
+  api('detect').then(d => { det = d; renderCards(); }).catch(() => {});
+  refresh().catch(e => { $('#root').textContent = e.message; });
+})();
+</script>
+</body>
+</html>
