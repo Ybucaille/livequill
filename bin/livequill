@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Lanceur sans installation : ./bin/livequill ./mon-site  (ou un lien symbolique dans ~/.local/bin)."""
+import os, sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from livequill.cli import main  # noqa: E402
+
+sys.exit(main())

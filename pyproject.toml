@@ -1,0 +1,21 @@
+[project]
+name = "livequill"
+version = "0.1.0"
+description = "A floating prompt bar for any local website: any model (API, local or CLI agent) edits your files live."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+livequill = "livequill.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["livequill", "livequill.adapters"]
+
+[tool.setuptools.package-data]
+livequill = ["static/*"]
