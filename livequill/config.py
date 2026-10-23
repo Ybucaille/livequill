@@ -32,9 +32,14 @@ class Config:
 
     def save(self):
         with self.lock:
-            d = os.path.dirname(self.path)
-            os.makedirs(d, mode=0o700, exist_ok=True)
-            os.chmod(d, 0o700)
+            d = os.path.dirname(self.path) or '.'
+            if not os.path.isdir(d):
+                os.makedirs(d, mode=0o700)
+            elif os.path.basename(d) == APP:
+                try:
+                    os.chmod(d, 0o700)      # notre dossier : on resserre ; un dossier partagé (--config /tmp/x.json) n'est pas touché
+                except OSError:
+                    pass
             tmp = self.path + '.tmp'
             # Créé directement en 600 : la clé n'est jamais lisible par les autres, même un instant
             fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)

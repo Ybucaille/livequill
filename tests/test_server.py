@@ -227,6 +227,17 @@ class HubMode(unittest.TestCase):
 
 
 class ConfigFile(unittest.TestCase):
+    def test_shared_folder_permissions_untouched(self):
+        d = temp_project()
+        try:
+            os.chmod(d, 0o755)          # ex. --config /tmp/livequill.json : /tmp n'est pas à nous
+            c = Config(os.path.join(d, 'lq.json'))
+            c.upsert('ollama', {'type': 'ollama'})
+            self.assertEqual(stat.S_IMODE(os.stat(d).st_mode), 0o755)
+            self.assertEqual(stat.S_IMODE(os.stat(c.path).st_mode), 0o600)
+        finally:
+            cleanup(d)
+
     def test_keep_key_on_empty_update_and_redact(self):
         d = temp_project()
         try:
