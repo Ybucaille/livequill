@@ -23,14 +23,14 @@ A floating prompt bar for any local site: type a change, the model of your choic
 ## Highlights
 
 - **Ask, don't dig.** Describe the change on the page you are looking at. The model finds the code, edits it, and the page reloads.
-- **Any model.** Claude, GPT, Gemini, Mistral, OpenRouter, local models through Ollama, LM Studio or llama.cpp, any OpenAI-compatible server, or the Claude Code, Codex and Gemini CLIs you already use.
+- **Any model.** Claude, GPT, Gemini, Mistral, OpenRouter, local models through Ollama, LM Studio or llama.cpp, any OpenAI-compatible server, or the Claude Code, Codex and Gemini CLIs you already use. No CLI? The agent built into the **Claude Desktop** or **ChatGPT** app works too.
 - **All your sites in one place.** A dashboard lists your projects. Each one is served as-is or behind your dev server (Vite, Next, Astro…).
 - **Safe by default.** Sandboxed file tools, a backup before every edit, one-click **Undo**, and API keys that never reach the browser.
 - **Nothing to install in your project.** The bar is added while pages are served, never written to disk. **Zero dependencies**: just Python.
 
 ## Quick start
 
-You need **Python 3.10+**, nothing else. Tested on Linux and macOS (Windows is not tested yet).
+You need **Python 3.10+**, nothing else. Runs on Linux and macOS (Windows is not supported).
 
 ```bash
 git clone https://github.com/Ybucaille/livequill.git
@@ -112,9 +112,21 @@ Prefer an install? `pipx install git+https://github.com/Ybucaille/livequill.git`
 | **LM Studio** | *Developer* tab → *Start server*. |
 | **llama.cpp** | `llama-server -m model.gguf --jinja`. |
 | **Other** | Any OpenAI-compatible server (vLLM, LocalAI, Jan, Groq, DeepSeek…): base URL, optional key, model name. |
-| **Claude Code** | `claude` installed and logged in. Runs with file edits allowed, **Bash and web tools disabled**. |
-| **Codex** | `codex` installed and logged in (`codex login`). Runs in its `workspace-write` sandbox, where Codex may run shell commands. |
+| **Claude Code** | `claude` installed and logged in, **or just the Claude Desktop app** (see below). Runs with file edits allowed, **Bash and web tools disabled**. |
+| **Codex** | `codex` installed and logged in (`codex login`), **or just the ChatGPT or Codex app** (see below). Runs in its `workspace-write` sandbox, where Codex may run shell commands. |
 | **Gemini CLI** | `gemini` installed. *Experimental: not tested yet.* |
+
+### Desktop apps, no CLI needed
+
+The **Claude Desktop** app ships with its own copy of Claude Code, and the **ChatGPT** app (and the Codex app on macOS) ships with Codex. If the CLI is not installed, LiveQuill uses the agent built into the app, with the account you are already signed in with. The setup page shows it as *“Trouvé dans l’app Claude Desktop”*, the connection test checks that you are signed in, and the newest version is picked every time the app updates itself.
+
+| App | Where LiveQuill looks |
+|---|---|
+| Claude Desktop | `~/.config/Claude/claude-code/<version>/…/claude` (Linux), `~/Library/Application Support/Claude/claude-code/<version>/…/claude` (macOS) |
+| ChatGPT | `/usr/lib/chatgpt/resources/codex` (Linux), `/Applications/ChatGPT.app/Contents/Resources/codex` (macOS) |
+| Codex app | `/Applications/Codex.app/Contents/Resources/codex` (macOS) |
+
+An installed CLI always takes priority. The macOS locations follow the same layout as Linux but have not been tested on a real Mac yet.
 
 > [!TIP]
 > Keys already in your environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`) are detected. Only the variable name is stored, never the key.
@@ -229,6 +241,10 @@ Click **Undo** in the bar. The files changed by the last request are restored fr
 ### Where is my data stored, and how do I uninstall?
 
 Your providers, keys and sites live in `~/.config/livequill/config.json`. Each project gets a `.livequill/` folder with its backups and conversation history. To uninstall, delete the cloned folder (or `pipx uninstall livequill`), `~/.config/livequill/` and the `.livequill/` folders you no longer need.
+
+### I only have the Claude Desktop or ChatGPT app. Does it work?
+
+Yes. LiveQuill finds the agent built into the app and uses it with your existing sign-in, so there is no CLI to install and no API key to create. See [Desktop apps, no CLI needed](#desktop-apps-no-cli-needed).
 
 ### Which local model should I pick?
 
