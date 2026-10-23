@@ -194,7 +194,7 @@ Register it in `KINDS` (`livequill/adapters/__init__.py`), and the setup page an
 
 ### Planned
 
-- **Automatic snapshots.** A snapshot of the site after every change made by the model, and a timeline in the bar to go back to any state in one click, not only the last one.
+- **Automatic snapshots with previews.** A snapshot of the site after every change made by the model, shown in a timeline in the bar. Each snapshot comes with a preview, so you can find your way: a thumbnail of the page, the request that produced it and the files it changed. Open any version live to check it, then restore it in one click, not only the last one.
 - **Dynamic sites with a mock database.** Support for sites with a backend and a database, plugged into a disposable mock database seeded with demo data, so the model can work on data-driven pages without ever touching real data.
 
 ### Ideas
