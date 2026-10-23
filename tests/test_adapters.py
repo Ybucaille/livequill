@@ -192,6 +192,21 @@ class CLI(unittest.TestCase):
         self.assertEqual(argv[-2:], ['--image', '/p/a.png'])
         self.assertIn('workspace-write', argv)
 
+    def test_detects_cli_outside_path(self):
+        import os, stat as st, tempfile
+        from unittest import mock
+        from livequill.adapters import cli
+        home = tempfile.mkdtemp()
+        os.makedirs(os.path.join(home, '.local', 'bin'))
+        exe = os.path.join(home, '.local', 'bin', 'claude')
+        with open(exe, 'w') as f:
+            f.write('#!/bin/sh\necho 1.0\n')
+        os.chmod(exe, st.S_IRWXU)
+        with mock.patch.dict(os.environ, {'PATH': '/nonexistent', 'HOME': home}):
+            self.assertEqual(cli.find('claude'), exe)
+            self.assertIsNone(cli.find('codex'))
+            self.assertEqual(cli.detect()['claude'], exe)
+
     def test_parsers(self):
         self.assertEqual(parse_claude({'type': 'stream_event', 'event': {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': 'a'}}}),
                          [{'type': 'delta', 'text': 'a'}])

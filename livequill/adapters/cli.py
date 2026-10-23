@@ -11,8 +11,26 @@ AGENTS = {
 }
 
 
+# Où les installeurs officiels posent ces CLI, au cas où LiveQuill est lancé avec un PATH réduit
+# (raccourci de bureau, service, autre session) qui ne contient pas ces dossiers.
+EXTRA_DIRS = ['~/.local/bin', '~/bin', '~/.npm-global/bin', '~/.bun/bin', '~/.volta/bin', '~/.cargo/bin',
+              '~/.claude/local', '/usr/local/bin', '/opt/homebrew/bin']
+
+
+def find(name):
+    """Chemin de l'exécutable : d'abord le PATH, puis les dossiers d'installation habituels."""
+    exe = shutil.which(name)
+    if exe:
+        return exe
+    for d in EXTRA_DIRS:
+        p = os.path.join(os.path.expanduser(d), name)
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+    return None
+
+
 def detect():
-    return {name: shutil.which(name) for name in AGENTS}
+    return {name: find(name) for name in AGENTS}
 
 
 class CLIAdapter(Adapter):
@@ -32,7 +50,7 @@ class CLIAdapter(Adapter):
         return {'tools': True, 'vision': self.agent in ('claude', 'codex'), 'effort': AGENTS[self.agent]['effort'], 'fast': False}
 
     def test(self):
-        exe = shutil.which(self.agent)
+        exe = find(self.agent)
         if not exe:
             raise RuntimeError(f'« {self.agent} » est introuvable dans le PATH')
         out = subprocess.run([exe, '--version'], capture_output=True, text=True, timeout=20)
@@ -40,7 +58,7 @@ class CLIAdapter(Adapter):
 
     def command(self, root, model, opts, images, prompt=''):
         """-> (argv, texte envoyé sur stdin). Le prompt passe par stdin : pas de limite de taille d'argument."""
-        exe = shutil.which(self.agent) or self.agent
+        exe = find(self.agent) or self.agent
         m = None if model in (None, '', 'default') else model
         e = opts.get('effort')
         if self.agent == 'claude':
@@ -71,6 +89,8 @@ class CLIAdapter(Adapter):
     def run(self, job, root, prompt, model, opts, images, emit):
         argv = self.command(root, model, opts, images, prompt)
         env = dict(os.environ, NO_COLOR='1')
+        if os.path.isabs(argv[0]):     # trouvé hors du PATH : ses outils voisins (node…) doivent rester accessibles
+            env['PATH'] = os.pathsep.join([os.path.dirname(argv[0]), env.get('PATH', '')])
         p = subprocess.Popen(argv, cwd=root, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True, bufsize=1, env=env)
         job.on_cancel(p.kill)
