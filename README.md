@@ -26,17 +26,19 @@ A floating prompt bar for any local site: type a change, the model of your choic
 - **Any model.** Claude, GPT, Gemini, Mistral, OpenRouter, local models through Ollama, LM Studio or llama.cpp, any OpenAI-compatible server, or the Claude Code, Codex and Gemini CLIs you already use.
 - **All your sites in one place.** A dashboard lists your projects. Each one is served as-is or behind your dev server (Vite, Next, Astro…).
 - **Safe by default.** Sandboxed file tools, a backup before every edit, one-click **Undo**, and API keys that never reach the browser.
-- **Nothing to install in your project.** The bar is added while pages are served, never written to disk. **Zero dependencies**: just Python 3.
+- **Nothing to install in your project.** The bar is added while pages are served, never written to disk. **Zero dependencies**: just Python.
 
 ## Quick start
 
-You need **Python 3.10+**. Nothing else.
+You need **Python 3.10+**, nothing else. Tested on Linux and macOS (Windows is not tested yet).
 
 ```bash
 git clone https://github.com/Ybucaille/livequill.git
 cd livequill
 ./bin/livequill
 ```
+
+Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal to stop it.
 
 1. **Setup.** The first launch opens the setup page. Pick a provider: paste an API key, or click a local model or CLI agent detected on your machine.
 2. **Add a site.** You land on **Mes sites** (the interface is in French for now). Add a project folder, or the URL of your running dev server.
@@ -49,6 +51,8 @@ Handy shortcuts:
 ./bin/livequill --proxy http://localhost:5173 ~/projects/app   # same, behind your dev server
 ln -s "$PWD/bin/livequill" ~/.local/bin/livequill              # make `livequill` available everywhere
 ```
+
+Prefer an install? `pipx install git+https://github.com/Ybucaille/livequill.git` gives you the `livequill` command.
 
 <details>
 <summary>All command-line options</summary>
@@ -109,7 +113,7 @@ ln -s "$PWD/bin/livequill" ~/.local/bin/livequill              # make `livequill
 | **llama.cpp** | `llama-server -m model.gguf --jinja`. |
 | **Other** | Any OpenAI-compatible server (vLLM, LocalAI, Jan, Groq, DeepSeek…): base URL, optional key, model name. |
 | **Claude Code** | `claude` installed and logged in. Runs with file edits allowed, **Bash and web tools disabled**. |
-| **Codex** | `codex` installed and logged in (`codex login`). Runs in its `workspace-write` sandbox. |
+| **Codex** | `codex` installed and logged in (`codex login`). Runs in its `workspace-write` sandbox, where Codex may run shell commands. |
 | **Gemini CLI** | `gemini` installed. *Experimental: not tested yet.* |
 
 > [!TIP]
@@ -215,6 +219,10 @@ Yes. Keep your dev server running and add the site with its URL (or run `livequi
 ### What if the model breaks something?
 
 Click **Undo** in the bar. The files changed by the last request are restored from the backup taken just before the edit, and you can undo several requests in a row.
+
+### Where is my data stored, and how do I uninstall?
+
+Your providers, keys and sites live in `~/.config/livequill/config.json`. Each project gets a `.livequill/` folder with its backups and conversation history. To uninstall, delete the cloned folder (or `pipx uninstall livequill`), `~/.config/livequill/` and the `.livequill/` folders you no longer need.
 
 ### Which local model should I pick?
 
