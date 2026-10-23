@@ -7,7 +7,7 @@ A floating prompt bar for any local site: type a change, the model of your choic
 
 [![CI](https://github.com/Ybucaille/livequill/actions/workflows/ci.yml/badge.svg)](https://github.com/Ybucaille/livequill/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Ybucaille/livequill/actions/workflows/codeql.yml/badge.svg)](https://github.com/Ybucaille/livequill/actions/workflows/codeql.yml)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-success)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](CONTRIBUTING.md)
@@ -30,7 +30,7 @@ A floating prompt bar for any local site: type a change, the model of your choic
 
 ## Quick start
 
-You need **Python 3.9+**. Nothing else.
+You need **Python 3.10+**. Nothing else.
 
 ```bash
 git clone https://github.com/Ybucaille/livequill.git
@@ -222,7 +222,7 @@ A 7B model or larger that supports tool calls, such as `qwen2.5:7b-instruct`, `q
 
 ## Contributing
 
-Contributions are welcome: adapters, themes, roadmap items, fixes and translations (the interface is currently in French). Start with [CONTRIBUTING.md](CONTRIBUTING.md). Every pull request runs the full CI (tests on Linux and macOS for Python 3.9 to 3.13, lint, secret scan, CodeQL) and is reviewed by the maintainer before merging.
+Contributions are welcome: adapters, themes, roadmap items, fixes and translations (the interface is currently in French). Start with [CONTRIBUTING.md](CONTRIBUTING.md). Every pull request runs the full CI (tests on Linux and macOS for Python 3.10 to 3.14, lint, secret scan, CodeQL) and is reviewed by the maintainer before merging.
 
 ```bash
 python3 -m unittest discover -s tests     # about 5 s, no real network calls

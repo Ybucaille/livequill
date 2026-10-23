@@ -3,7 +3,7 @@ name = "livequill"
 version = "0.1.0"
 description = "A floating prompt bar for any local website: any model (API, local or CLI agent) edits your files live."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
 
@@ -21,7 +21,7 @@ packages = ["livequill", "livequill.adapters"]
 livequill = ["static/*"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 150
 
 [tool.ruff.lint]

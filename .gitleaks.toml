@@ -1,0 +1,16 @@
+# Default gitleaks rules, plus the fake keys the test suite uses on purpose.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake API keys in tests"
+paths = ['''^tests/''']
+condition = "AND"
+regexTarget = "match"
+regexes = [
+  '''sk-abcdef123''',
+  '''sk-ant-SECRET-123456''',
+  '''sk-ant-test''',
+  '''sk-test''',
+  '''g-key''',
+]
