@@ -42,6 +42,7 @@
   h2{margin:0 0 10px;font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;text-align:center}
   .sub{max-width:620px;margin:0 auto 40px;color:var(--soft);text-align:center}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid.two{grid-template-columns:1fr 1fr;max-width:820px;margin:0 auto}
   .f{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
   .f .i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);margin-bottom:12px}
   .f .i svg{width:20px;height:20px}
@@ -71,13 +72,13 @@
   footer .wrap{display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between}
   footer a{color:var(--soft)}
   @media (max-width:860px){.grid{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr 1fr}.start{grid-template-columns:1fr}}
-  @media (max-width:620px){header nav{display:none}.grid,.shots,.trust{grid-template-columns:1fr}.hero{padding-top:56px}section{padding:52px 0}}
+  @media (max-width:620px){header nav{display:none}.grid,.grid.two,.shots,.trust{grid-template-columns:1fr}.hero{padding-top:56px}section{padding:52px 0}}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#d97757"/><path d="M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z" fill="#fff"/></svg>LiveQuill</a>
-  <nav><a href="#features">Features</a><a href="#providers">Providers</a><a href="#start">Get started</a><a href="#security">Security</a></nav>
+  <nav><a href="#features">Features</a><a href="#providers">Providers</a><a href="#start">Get started</a><a href="#roadmap">Roadmap</a><a href="#security">Security</a></nav>
   <a class="btn" href="https://github.com/Ybucaille/livequill"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.2-3.1-.1-.4-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.1 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>GitHub</a>
 </div></header>
 
@@ -125,6 +126,15 @@
       <span>Anthropic</span><span>OpenAI</span><span>Google Gemini</span><span>Mistral</span><span>OpenRouter</span>
       <span>Ollama<i>local</i></span><span>LM Studio<i>local</i></span><span>llama.cpp<i>local</i></span><span>Any OpenAI-compatible API</span>
       <span>Claude Code<i>CLI</i></span><span>Codex<i>CLI</i></span><span>Gemini CLI<i>CLI</i></span>
+    </div>
+  </div></section>
+
+  <section id="roadmap"><div class="wrap">
+    <h2>Coming next</h2>
+    <p class="sub">Two improvements are planned. Follow the repository to see them land.</p>
+    <div class="grid two">
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Automatic snapshots</h3><p>A snapshot after every change, and a timeline to go back to any state of your site in one click, not only the last one.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></div><h3>Dynamic sites, mock database</h3><p>Sites with a backend, plugged into a disposable database seeded with demo data, so the model edits data-driven pages without touching real data.</p></div>
     </div>
   </div></section>
 

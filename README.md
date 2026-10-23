@@ -192,11 +192,17 @@ Register it in `KINDS` (`livequill/adapters/__init__.py`), and the setup page an
 
 ## Roadmap
 
-Ideas we would like to build next. Want one of them? Open an issue or a pull request.
+### Planned
 
-- **Snapshot timeline.** Every agent edit already creates a backup. The next step is a timeline in the bar: browse the site's versions, preview any of them, and restore it in one click, not only the last change.
+- **Automatic snapshots.** A snapshot of the site after every change made by the model, and a timeline in the bar to go back to any state in one click, not only the last one.
+- **Dynamic sites with a mock database.** Support for sites with a backend and a database, plugged into a disposable mock database seeded with demo data, so the model can work on data-driven pages without ever touching real data.
+
+### Ideas
+
 - **Point and ask.** Click an element on the page, like the browser inspector, to scope the request to it: “make *this* button bigger”.
-- **Review before writing.** An optional mode that shows the proposed diff for each file and waits for you to accept or reject it before anything is saved.
+- **Review before writing.** An optional mode that shows the proposed diff for each file and waits for you to accept or reject it.
+
+Want to help with one of them? Open an issue or a pull request.
 
 ## FAQ
 
