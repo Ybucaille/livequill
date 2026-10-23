@@ -40,10 +40,10 @@ KINDS = {
     # --- agents CLI : login = commande pour se connecter au compte du fournisseur ------------------------
     'cli-claude': {'label': 'Claude Code (CLI)', 'group': 'cli', 'adapter': CLIAdapter, 'command': 'claude', 'fields': ['extra_models'],
                    'url': 'https://code.claude.com/docs', 'url_label': 'Installer', 'login': 'claude, puis /login',
-                   'help': 'Utilise « claude -p » dans le dossier du projet, avec ton compte Claude Code'},
+                   'help': 'Utilise « claude -p » dans le dossier du projet, avec ton compte Claude Code (CLI, ou celle intégrée à l’app Claude Desktop)'},
     'cli-codex': {'label': 'Codex (CLI)', 'group': 'cli', 'adapter': CLIAdapter, 'command': 'codex', 'fields': ['extra_models'],
                   'url': 'https://github.com/openai/codex', 'url_label': 'Installer', 'login': 'codex login',
-                  'help': 'Utilise « codex exec » dans le dossier du projet, avec ta config Codex'},
+                  'help': 'Utilise « codex exec » dans le dossier du projet, avec ton compte (CLI, ou celle intégrée à l’app ChatGPT ou Codex)'},
     'cli-gemini': {'label': 'Gemini CLI', 'group': 'cli', 'adapter': CLIAdapter, 'command': 'gemini', 'fields': ['extra_models'],
                    'url': 'https://github.com/google-gemini/gemini-cli', 'url_label': 'Installer', 'login': 'gemini (connexion au 1er lancement)',
                    'help': 'Utilise « gemini -p » dans le dossier du projet'},

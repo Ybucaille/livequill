@@ -1,5 +1,8 @@
-"""Agents CLI déjà installés (Claude Code, Codex, Gemini CLI) : ils font leur propre boucle et écrivent les fichiers."""
-import json, os, shutil, subprocess
+"""Agents CLI déjà installés (Claude Code, Codex, Gemini CLI) : ils font leur propre boucle et écrivent les fichiers.
+
+Pont vers les applications desktop : Claude Desktop embarque Claude Code, ChatGPT (et l'app Codex) embarquent Codex.
+Sans CLI installée, on utilise l'agent de l'application, déjà connecté au compte de l'utilisateur."""
+import glob, json, os, re, shutil, subprocess
 
 from .base import Adapter, levels
 
@@ -17,20 +20,66 @@ EXTRA_DIRS = ['~/.local/bin', '~/bin', '~/.npm-global/bin', '~/.bun/bin', '~/.vo
               '~/.claude/local', '/usr/local/bin', '/opt/homebrew/bin']
 
 
-def find(name):
-    """Chemin de l'exécutable : d'abord le PATH, puis les dossiers d'installation habituels."""
+# Agents embarqués dans les applications desktop (Linux puis macOS). Le dossier de version change à chaque mise à jour
+# de l'application : on cherche à chaque fois et on prend la version la plus récente.
+BUNDLED = {
+    'claude': [('Claude Desktop', '~/.config/Claude/claude-code/*/*/claude'),
+               ('Claude Desktop', '~/Library/Application Support/Claude/claude-code/*/*/claude')],
+    'codex': [('ChatGPT', '/usr/lib/chatgpt/resources/codex'),
+              ('ChatGPT', '/opt/ChatGPT/resources/codex'),
+              ('ChatGPT', '/Applications/ChatGPT.app/Contents/Resources/codex'),
+              ('ChatGPT', '~/Applications/ChatGPT.app/Contents/Resources/codex'),
+              ('Codex', '/Applications/Codex.app/Contents/Resources/codex'),
+              ('Codex', '~/Applications/Codex.app/Contents/Resources/codex')],
+}
+
+
+def _version_key(path):
+    return [int(n) for n in re.findall(r'\d+', path)]
+
+
+def locate(name):
+    """-> (chemin, application) : la CLI installée d'abord, sinon l'agent embarqué dans une application desktop."""
     exe = shutil.which(name)
     if exe:
-        return exe
+        return exe, None
     for d in EXTRA_DIRS:
         p = os.path.join(os.path.expanduser(d), name)
         if os.path.isfile(p) and os.access(p, os.X_OK):
-            return p
-    return None
+            return p, None
+    for app, pattern in BUNDLED.get(name, []):
+        hits = [p for p in glob.glob(os.path.expanduser(pattern)) if os.path.isfile(p) and os.access(p, os.X_OK)]
+        if hits:
+            return max(hits, key=_version_key), app
+    return None, None
+
+
+def find(name):
+    return locate(name)[0]
 
 
 def detect():
     return {name: find(name) for name in AGENTS}
+
+
+def detect_via():
+    """Application desktop qui fournit l'agent, quand ce n'est pas une CLI installée."""
+    return {name: locate(name)[1] for name in AGENTS}
+
+
+def logged_in(name, exe):
+    """True / False si l'agent sait le dire, None sinon (vieille version, commande inconnue)."""
+    try:
+        if name == 'claude':
+            out = subprocess.run([exe, 'auth', 'status', '--json'], capture_output=True, text=True, timeout=20)
+            return bool(json.loads(out.stdout).get('loggedIn')) if out.stdout.strip().startswith('{') else None
+        if name == 'codex':
+            out = subprocess.run([exe, 'login', 'status'], capture_output=True, text=True, timeout=20)
+            text = (out.stdout + out.stderr).lower()
+            return True if 'logged in' in text and 'not logged in' not in text else (False if 'not logged in' in text else None)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    return None
 
 
 class CLIAdapter(Adapter):
@@ -50,11 +99,17 @@ class CLIAdapter(Adapter):
         return {'tools': True, 'vision': self.agent in ('claude', 'codex'), 'effort': AGENTS[self.agent]['effort'], 'fast': False}
 
     def test(self):
-        exe = find(self.agent)
+        exe, app = locate(self.agent)
+        label = AGENTS[self.agent]['label']
         if not exe:
-            raise RuntimeError(f'« {self.agent} » est introuvable dans le PATH')
+            raise RuntimeError(f'« {self.agent} » est introuvable : installe la CLI, ou l’application '
+                               f'{"Claude Desktop" if self.agent == "claude" else "ChatGPT" if self.agent == "codex" else "officielle"}')
+        if logged_in(self.agent, exe) is False:
+            how = f'ouvre l’application {app} et connecte-toi' if app else ('lance « claude auth login »' if self.agent == 'claude' else 'lance « codex login »')
+            raise RuntimeError(f'{label} n’est pas connecté à ton compte : {how}, puis reteste')
         out = subprocess.run([exe, '--version'], capture_output=True, text=True, timeout=20)
-        return f'{AGENTS[self.agent]["label"]} trouvé : {(out.stdout or out.stderr).strip()[:80]}', self.list_models()
+        version = (out.stdout or out.stderr).strip()[:80]
+        return f'{label} trouvé{f" (via l’app {app})" if app else ""} : {version}', self.list_models()
 
     def command(self, root, model, opts, images, prompt=''):
         """-> (argv, texte envoyé sur stdin). Le prompt passe par stdin : pas de limite de taille d'argument."""

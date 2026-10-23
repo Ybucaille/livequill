@@ -205,7 +205,7 @@
       <div class="island" style="--bd:-1.8s">
         <div class="ihead">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4M12 16h7"/><rect x="2" y="3" width="20" height="18" rx="3"/></svg></div>
-          <div><h2 id="h-cli">Tes agents de code</h2><p>Les outils que tu utilises déjà, avec ton compte. Ils sont installés ici, mais leurs modèles tournent dans le cloud.</p>
+          <div><h2 id="h-cli">Tes agents de code</h2><p>Les outils que tu utilises déjà, avec ton compte : en CLI, ou directement via l’app Claude Desktop ou ChatGPT. Ils sont installés ici, mais leurs modèles tournent dans le cloud.</p>
             <div class="tags"><span class="tag">Installé sur ta machine</span><span class="tag">Modèles en ligne</span><span class="tag">Ton abonnement</span></div></div>
         </div>
         <div class="grid" data-group="cli"></div>
@@ -297,7 +297,11 @@
     if (!det) return null;
     if (kind === 'ollama') return det.ollama.up ? `Ollama tourne ici avec ${det.ollama.models.length} modèle(s). Clique pour l’activer.` : null;
     if (kind === 'lmstudio' || kind === 'llamacpp') return det[kind].up ? 'Serveur détecté sur ce poste. Clique pour l’activer.' : null;
-    if (kind.startsWith('cli-')) return det.cli[kind.slice(4)] ? 'Installé sur ce poste. Clique pour l’activer.' : null;
+    if (kind.startsWith('cli-')) {
+      const a = kind.slice(4), via = (det.cli_via || {})[a];
+      if (!det.cli[a]) return null;
+      return via ? `Trouvé dans l’app ${via}, déjà connecté à ton compte. Clique pour l’activer.` : 'Installé sur ce poste. Clique pour l’activer.';
+    }
     if (K[kind].env && det.env[kind]) return `Clé trouvée dans ${K[kind].env}. Clique pour l’activer.`;
     return null;
   }
@@ -306,7 +310,7 @@
     if (kind === 'custom') return 'N’importe quel serveur compatible OpenAI : vLLM, LocalAI, Jan…';
     if (d.group === 'cloud') return 'Crée une clé sur le site du fournisseur, puis clique ici.';
     if (d.group === 'local') return 'Installe-le et lance son serveur, puis clique ici.';
-    return 'Installe le CLI et connecte-toi, puis clique ici.';
+    return kind === 'cli-claude' ? 'Installe la CLI ou l’app Claude Desktop, puis clique ici.' : kind === 'cli-codex' ? 'Installe la CLI ou l’app ChatGPT, puis clique ici.' : 'Installe la CLI et connecte-toi, puis clique ici.';
   }
 
   function cardHtml(kind, pid) {
@@ -356,7 +360,11 @@
   function howto(type) {
     const d = K[type];
     if (d.group === 'cloud') return `1. ${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">Ouvre la page des clés ${esc(d.label)} ↗</a>` : ''} et connecte-toi.<br>2. Crée une clé, colle-la ci-dessous, puis teste la connexion.`;
-    if (d.group === 'cli') return `${esc(d.help)}.<br>Pas encore connecté ? Lance <code>${esc(d.login)}</code> dans un terminal. ${extLink(d)}`;
+    if (d.group === 'cli') {
+      const via = det && (det.cli_via || {})[type.slice(4)];
+      if (via) return `${esc(d.help)}.<br>LiveQuill utilise l’agent intégré à l’app <b>${esc(via)}</b>, avec le compte de l’app. Pas encore connecté ? Ouvre l’app ${esc(via)} et connecte-toi.`;
+      return `${esc(d.help)}.<br>Pas encore connecté ? Lance <code>${esc(d.login)}</code> dans un terminal. ${extLink(d)}`;
+    }
     return `${esc(d.help)}. ${extLink(d)}`;
   }
 

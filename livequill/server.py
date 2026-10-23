@@ -3,7 +3,7 @@ import hmac, http.client, http.server, json, os, re, secrets, socket, socketserv
 import urllib.parse
 
 from . import adapters, agent
-from .adapters.cli import detect as detect_cli
+from .adapters.cli import AGENTS as CLI_AGENTS, locate as locate_cli
 from .config import Config, redact
 from .net import Transport
 from .sandbox import DENY_DIRS, Conversation, HistoryStore, Project, denied
@@ -253,10 +253,11 @@ class App:
         tags = up('http://127.0.0.1:11434/api/tags')
         lms = up('http://127.0.0.1:1234/v1/models')
         lcpp = up('http://127.0.0.1:8080/v1/models')
+        cli = [(k, locate_cli(k)) for k in CLI_AGENTS]
         envs = {k: bool(os.environ.get(d['env'])) for k, d in adapters.KINDS.items() if d.get('env')}
         return {'ollama': {'up': tags is not None, 'models': [m['name'] for m in (tags or {}).get('models', [])]},
                 'lmstudio': {'up': lms is not None}, 'llamacpp': {'up': lcpp is not None},
-                'cli': {k: bool(v) for k, v in detect_cli().items()}, 'env': envs}
+                'cli': {k: bool(p) for k, (p, _) in cli}, 'cli_via': {k: app for k, (_, app) in cli if app}, 'env': envs}
 
 
 class Sites:

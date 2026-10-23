@@ -202,10 +202,35 @@ class CLI(unittest.TestCase):
         with open(exe, 'w') as f:
             f.write('#!/bin/sh\necho 1.0\n')
         os.chmod(exe, st.S_IRWXU)
-        with mock.patch.dict(os.environ, {'PATH': '/nonexistent', 'HOME': home}):
+        with mock.patch.dict(os.environ, {'PATH': '/nonexistent', 'HOME': home}), mock.patch.object(cli, 'BUNDLED', {}):
             self.assertEqual(cli.find('claude'), exe)
             self.assertIsNone(cli.find('codex'))
             self.assertEqual(cli.detect()['claude'], exe)
+
+    def test_desktop_app_bridge(self):
+        """Sans CLI installée : l'agent embarqué dans l'app desktop, version la plus récente, connexion vérifiée."""
+        import os, stat as st, tempfile
+        from unittest import mock
+        from livequill.adapters import cli
+        home = tempfile.mkdtemp()
+
+        def fake(path, status):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w') as f:
+                f.write('#!/bin/sh\nif [ "$1" = auth ]; then echo \'{"loggedIn": %s}\'; else echo 9.9 fake; fi\n' % status)
+            os.chmod(path, st.S_IRWXU)
+        old = os.path.join(home, '.config/Claude/claude-code/2.1.9/aaa/claude')
+        new = os.path.join(home, '.config/Claude/claude-code/2.1.10/bbb/claude')
+        fake(old, 'true')
+        fake(new, 'true')
+        with mock.patch.dict(os.environ, {'PATH': '/nonexistent', 'HOME': home}), mock.patch.object(cli, 'EXTRA_DIRS', []):
+            self.assertEqual(cli.locate('claude'), (new, 'Claude Desktop'))       # 2.1.10 > 2.1.9
+            msg, models = cli.CLIAdapter({'command': 'claude'}).test()
+            self.assertIn('via l’app Claude Desktop', msg)
+            self.assertEqual(cli.CLIAdapter({'command': 'claude'}).command('/p', 'haiku', {}, [])[0], new)
+            fake(new, 'false')
+            with self.assertRaisesRegex(RuntimeError, 'ouvre l’application Claude Desktop'):
+                cli.CLIAdapter({'command': 'claude'}).test()
 
     def test_parsers(self):
         self.assertEqual(parse_claude({'type': 'stream_event', 'event': {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': 'a'}}}),
