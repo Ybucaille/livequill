@@ -1,0 +1,41 @@
+name: New provider
+description: Ask for (or offer) support for a model provider, local server or CLI agent.
+labels: [provider, needs-triage]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Provider
+      placeholder: Groq, vLLM, Aider…
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options: [Cloud API, Local server, CLI agent, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: openai
+    attributes:
+      label: Is it OpenAI-compatible (/v1/chat/completions)?
+      description: If yes, it may already work with the "Other" card, and the adapter is a one-liner.
+      options: ["Yes", "No", "Not sure"]
+    validations:
+      required: true
+  - type: input
+    id: docs
+    attributes:
+      label: Link to its API docs
+  - type: textarea
+    id: notes
+    attributes:
+      label: Tool calling, vision, reasoning options
+      description: Anything that helps write the capability table.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I can write the adapter (see "Adding a provider" in the README)

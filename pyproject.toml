@@ -19,3 +19,12 @@ packages = ["livequill", "livequill.adapters"]
 
 [tool.setuptools.package-data]
 livequill = ["static/*"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 150
+
+[tool.ruff.lint]
+# Erreurs réelles (pyflakes, bugbear, syntaxe) ; le style compact du projet (one-liners) est voulu
+select = ["F", "E9", "E7", "W6", "B"]
+ignore = ["E701", "E702", "E731", "E741", "B008"]

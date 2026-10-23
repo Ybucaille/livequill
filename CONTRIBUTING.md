@@ -15,7 +15,7 @@ Thanks for taking the time to contribute! Bug reports, new provider adapters, th
 git clone https://github.com/Ybucaille/livequill.git
 cd livequill
 python3 -m unittest discover -s tests
-./bin/livequill demo
+./bin/livequill          # dashboard; add any local project as a site
 ```
 
 ## Common contributions
@@ -32,9 +32,11 @@ Add an entry to `THEMES` in `livequill/static/overlay.js`. Each entry has a `sha
 
 ## Pull requests
 
+`main` is protected: every change goes through a pull request, needs a green CI and the maintainer's approval. CI for first-time and outside contributors starts once the maintainer approves the run.
+
 1. Fork the repository and create a branch from `main` (`feat/…`, `fix/…`, `docs/…`).
 2. Use [Conventional Commits](https://www.conventionalcommits.org/) messages: `feat(adapters): add Groq`, `fix(server): …`.
-3. Run `python3 -m unittest discover -s tests` and check the demo still works (`./bin/livequill demo`).
+3. Run `python3 -m unittest discover -s tests` and try your change on a real site (`./bin/livequill ~/projects/some-site`).
 4. Explain what changed and why in the pull request. Add a screenshot or a short recording for UI changes.
 
 ## Reporting bugs

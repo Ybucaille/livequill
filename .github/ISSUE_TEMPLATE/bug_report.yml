@@ -1,0 +1,52 @@
+name: Bug report
+description: Something does not work as expected.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please **remove any API key** from what you paste. Security issues go to the [private advisory form](https://github.com/Ybucaille/livequill/security/advisories/new) instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. livequill ./my-site
+        2. Ask "…"
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and model
+      placeholder: Ollama · qwen2.5:7b-instruct
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options: [Static folder, Proxy (--proxy), Not relevant]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS, Python version, browser
+      placeholder: Ubuntu 24.04 · Python 3.12 · Firefox 140
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Terminal output, ideally with LIVEQUILL_DEBUG=1. Keys are masked, but double-check.
+      render: text
