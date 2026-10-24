@@ -36,7 +36,13 @@
   .lead{max-width:640px;margin:22px auto 30px;color:var(--soft);font-size:clamp(17px,2.2vw,20px)}
   .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   .video{margin:48px auto 0;max-width:1000px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#000;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .video{position:relative}
   .video video{display:block;width:100%;height:auto}
+  /* La musique ne démarre jamais seule : la vidéo part en sourdine, ce bouton active le son */
+  .sound{position:absolute;left:16px;top:16px;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(255,255,255,.25);
+    border-radius:999px;background:rgba(10,10,14,.65);backdrop-filter:blur(8px);color:#fff;font:600 13px system-ui,sans-serif;cursor:pointer}
+  .sound:hover{background:rgba(10,10,14,.85)}
+  .sound svg{width:16px;height:16px}
   .caption{margin-top:12px;color:var(--mute);font-size:14px;text-align:center}
   section{padding:70px 0;scroll-margin-top:60px}
   h2{margin:0 0 10px;font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;text-align:center}
@@ -92,9 +98,10 @@
       <a class="btn" href="https://github.com/Ybucaille/livequill">View on GitHub</a>
     </div>
     <div class="video">
-      <video src="assets/demo.mp4?v=dev" poster="assets/images/hero.jpg?v=dev" autoplay muted loop playsinline controls preload="metadata" aria-label="LiveQuill demo"></video>
+      <video id="demo" src="assets/demo.mp4?v=dev" poster="assets/images/hero.jpg?v=dev" autoplay muted loop playsinline controls preload="metadata" aria-label="LiveQuill demo"></video>
+      <button type="button" class="sound" id="sound" aria-pressed="false"></button>
     </div>
-    <p class="caption">A real, unedited first run: a portfolio from a template, a smooth scroll engine added by asking, a quick color change, a version preview, undo.</p>
+    <p class="caption">A real first run with Claude Code (Opus): a portfolio from a template, five project images turned into a 3D gallery driven by the scroll, a quick color change, undo. Waiting for the model is sped up.</p>
   </div>
 
   <section id="features"><div class="wrap">
@@ -186,6 +193,15 @@ livequill --proxy http://localhost:5173 ~/projects/my-app
       e.target.textContent = 'Copied'; setTimeout(() => (e.target.textContent = 'Copy'), 1500);
     });
   });
+
+  // Son de la démo : coupé au départ, un clic l'active (et la vidéo reprend si elle était en pause)
+  const demo = document.getElementById('demo'), sound = document.getElementById('sound');
+  const on = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+  const off = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>';
+  const paint = () => { sound.innerHTML = demo.muted ? off + 'Sound on' : on + 'Sound off'; sound.setAttribute('aria-pressed', String(!demo.muted)); };
+  sound.addEventListener('click', () => { demo.muted = !demo.muted; if (!demo.muted) demo.play().catch(() => {}); paint(); });
+  demo.addEventListener('volumechange', paint);
+  paint();
 </script>
 </body>
 </html>

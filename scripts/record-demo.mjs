@@ -10,7 +10,7 @@
 // --home is used as $HOME for LiveQuill so the paths shown on screen stay short (~/LiveQuill/sites/…). Link your
 // CLI credentials into it first if you record with a CLI agent (e.g. ln -s ~/.claude ~/.claude.json).
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,11 @@ const SITE = arg('site', 'Nora Lind');                   // name typed in the ne
 const TEMPLATE = arg('template', 'portfolio');
 const PROVIDER = arg('provider', 'cli-claude');        // setup card to click
 const MODEL = arg('model', 'haiku');                    // model to make default
-const PROMPT = arg('prompt', 'Add a smooth scrolling engine with Lenis and GSAP ScrollTrigger from a CDN: each section fades and slides in as you scroll, the hero title has a subtle parallax, and a thin progress bar at the top shows how far you have scrolled.');
+const PROMPT = arg('prompt', 'Here are 5 of my projects. Turn the Selected work section into a 3D gallery: the project images float on a ring around the camera, the ring turns as you scroll, and the camera glides through a dark room with a grid floor. Use Three.js, GSAP ScrollTrigger and Lenis from a CDN, keep the rest of the page.');
+// Speed per time range of the raw video, to keep it short around the part worth watching, e.g. "0-45:1.6,45-67:1,67-:1.8"
+const SPEEDUP = arg('speedup', '');
+const ASSETS = arg('assets', '');                          // folder from scripts/make-demo-assets.py: project-*.jpg attached to the first request, music.wav
+
 const PROMPT2 = arg('prompt2', 'make the background a deep navy blue');
 const OUT = resolve(arg('out', 'docs'));
 const SHOTS_ONLY = process.argv.includes('--shots-only');   // README screenshots only: no model call, no video
@@ -36,7 +40,8 @@ mkdirSync(join(OUT, 'images'), { recursive: true });
 
 const lq = spawn('python3', [join(REPO, 'bin/livequill'), '--port', String(PORT), '--no-open', '--config', join(work, 'config.json')],
   { env: { ...process.env, HOME, LIVEQUILL_QUIET: '1' }, stdio: 'ignore' });
-const chrome = spawn(arg('chromium', 'chromium'), ['--headless=new', `--remote-debugging-port=${CDP}`, `--user-data-dir=${join(work, 'profile')}`,
+// GPU on: without it headless Chrome renders WebGL in software (about 14 fps) and the video stutters
+const chrome = spawn(arg('chromium', 'chromium'), ['--headless=new', '--enable-gpu', '--ignore-gpu-blocklist', `--remote-debugging-port=${CDP}`, `--user-data-dir=${join(work, 'profile')}`,
   `--window-size=${W},${H}`, '--hide-scrollbars', '--force-device-scale-factor=1', '--no-first-run', 'about:blank'], { stdio: 'ignore' });
 const cleanup = () => { try { chrome.kill(); } catch {} try { lq.kill(); } catch {} };
 process.on('exit', cleanup);
@@ -114,19 +119,34 @@ async function type(text) { const d = text.length > 80 ? 12 : 45; for (const ch 
 async function scrollThrough() {
   await point(W / 2, H / 2);
   for (let i = 0; i < 220 && !(await js('scrollY + innerHeight >= document.documentElement.scrollHeight - 4')); i++) {
-    await cdp('Input.dispatchMouseEvent', { type: 'mouseWheel', x: W / 2, y: H / 2, deltaX: 0, deltaY: 55 }); await sleep(120);
+    await cdp('Input.dispatchMouseEvent', { type: 'mouseWheel', x: W / 2, y: H / 2, deltaX: 0, deltaY: 70 }); await sleep(100);
   }
   await sleep(1500);
   for (let i = 0; i < 60 && (await js('scrollY')) > 2; i++) { await cdp('Input.dispatchMouseEvent', { type: 'mouseWheel', x: W / 2, y: H / 2, deltaX: 0, deltaY: -400 }); await sleep(80); }
   await sleep(1200);
 }
-async function ask(text) {
+// Waits for the model are sped up in the video; a badge says so while they last
+const waits = [];
+const BADGE = `(() => { const b = document.createElement('div'); b.id = 'rec-badge'; b.textContent = '⏩  ${MODEL[0].toUpperCase() + MODEL.slice(1)} is working, sped up';
+  Object.assign(b.style, { position: 'fixed', top: '18px', left: '50%', transform: 'translateX(-50%)', zIndex: 2147483647, padding: '8px 16px', borderRadius: '999px',
+    background: 'rgba(20,20,24,.85)', color: '#fff', font: '600 14px system-ui,sans-serif', boxShadow: '0 6px 20px rgba(0,0,0,.35)' });
+  document.documentElement.appendChild(b); })()`;
+async function attach(files) {
+  const r = await cdp('Runtime.evaluate', { expression: `document.getElementById('livequill').shadowRoot.querySelector('input[type=file]')` });
+  await cdp('DOM.setFileInputFiles', { files, objectId: r.result.result.objectId });
+  await sleep(1200);
+}
+async function ask(text, files) {
   await click('bar:textarea');
+  if (files && files.length) await attach(files);
   await type(text);
   await sleep(500);
   await key('Enter', 'Enter', 13);
   await sleep(1500);
-  for (let i = 0; i < 1200 && (await api(site, 'state')).running; i++) await sleep(500);
+  await js(BADGE);
+  const w = [Date.now() / 1000];
+  for (let i = 0; i < 1800 && (await api(site, 'state')).running; i++) await sleep(500);
+  w.push(Date.now() / 1000); waits.push(w);
   const l = waitLoad(8000); await l;
   await sleep(900); await js(CURSOR); await cast(true);
 }
@@ -178,8 +198,9 @@ await l; await sleep(1500); await js(CURSOR); await cast(true);
 const site = (await api(base, 'sites')).sites[0].url;
 
 if (!SHOTS_ONLY) {
-  // 3. A real feature: a scroll engine, then scroll through the page to see it
-  await ask(PROMPT);
+  // 3. A real feature: a 3D gallery driven by the scroll, built from the attached project images
+  const images = ASSETS ? readdirSync(ASSETS).filter(f => /^project-\d+\.jpg$/.test(f)).sort().map(f => join(ASSETS, f)) : [];
+  await ask(PROMPT, images);
   await sleep(2500);
   await snap('hero.jpg');
   await click('bar:.histbtn');                                  // fold the panel to see the whole page
@@ -251,10 +272,26 @@ ws.close(); cleanup();
 
 // --- assemble: real durations between frames, then MP4 (H.264) and a light GIF ---
 if (!SHOTS_ONLY) {
-  const list = shots.map((s, i) => `file '${s.f}'\nduration ${Math.max(0.01, ((shots[i + 1]?.t ?? s.t + 1) - s.t)).toFixed(3)}`).join('\n') + `\nfile '${shots.at(-1).f}'\n`;
+  const speed = t => { for (const [a, b] of waits) if (t >= a && t < b) return Math.max(8, (b - a) / 6); return 1; };
+  const list = shots.map((s, i) => `file '${s.f}'\nduration ${Math.max(0.001, ((shots[i + 1]?.t ?? s.t + 1) - s.t) / speed(s.t)).toFixed(4)}`).join('\n') + `\nfile '${shots.at(-1).f}'\n`;
   writeFileSync(join(work, 'list.txt'), list);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(work, 'list.txt'), '-vf', 'fps=30,format=yuv420p',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', join(OUT, 'demo.mp4')]);
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', join(work, 'video.mp4')]);
+  if (SPEEDUP) {
+    const parts = SPEEDUP.split(',').map(p => { const [range, k] = p.split(':'); const [a, b] = range.split('-'); return { a: +a, b: b === '' ? null : +b, k: +k }; });
+    const graph = parts.map((p, i) => `[0:v]trim=start=${p.a}${p.b === null ? '' : `:end=${p.b}`},setpts=(PTS-STARTPTS)/${p.k}[s${i}]`).join(';')
+      + ';' + parts.map((_, i) => `[s${i}]`).join('') + `concat=n=${parts.length}:v=1:a=0,fps=30,format=yuv420p[v]`;
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(work, 'video.mp4'), '-filter_complex', graph, '-map', '[v]',
+      '-c:v', 'libx264', '-preset', 'slow', '-crf', '22', join(work, 'cut.mp4')]);
+    execFileSync('mv', [join(work, 'cut.mp4'), join(work, 'video.mp4')]);
+  }
+  // Soft background music (scripts/make-demo-assets.py), faded out at the end; the site only plays it on request
+  const music = ASSETS && join(ASSETS, 'music.wav');
+  if (music && existsSync(music)) {
+    const dur = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', join(work, 'video.mp4')]).toString();
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(work, 'video.mp4'), '-stream_loop', '-1', '-i', music, '-map', '0:v', '-map', '1:a',
+      '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-af', `afade=t=in:d=1.5,afade=t=out:st=${Math.max(0, dur - 3).toFixed(2)}:d=3`, '-shortest', '-movflags', '+faststart', join(OUT, 'demo.mp4')]);
+  } else execFileSync('cp', [join(work, 'video.mp4'), join(OUT, 'demo.mp4')]);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(OUT, 'demo.mp4'), '-vf',
     'fps=6,scale=640:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=80:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', join(OUT, 'demo.gif')]);
 }
