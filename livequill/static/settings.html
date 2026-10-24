@@ -18,7 +18,7 @@
 (() => {
   const tell = msg => parent.postMessage({ livequill: msg }, location.origin);
   LQ.settings.open({
-    tab: new URLSearchParams(location.search).get('tab') || 'providers',
+    tab: new URLSearchParams(location.search).get('tab') || 'general',
     onChange: () => tell('changed'),
     onLang: () => tell('lang'),
     onClose: () => tell('closed'),

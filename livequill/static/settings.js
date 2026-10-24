@@ -12,8 +12,8 @@
       <button type="button" class="x" data-st-close aria-label="${esc(t('Close'))}">×</button>
       <h3 id="st-title">${esc(t('Settings'))}</h3>
       <div class="tabs" role="tablist">
-        <button type="button" role="tab" data-tab="providers">${esc(t('Models'))}</button>
         <button type="button" role="tab" data-tab="general">${esc(t('General'))}</button>
+        <button type="button" role="tab" data-tab="providers">${esc(t('Models'))}</button>
       </div>
       <div class="sect" data-pane="providers">
         <h4>${esc(t('On your computer'))}</h4><div class="pgrid three" data-group="local"></div>
@@ -82,7 +82,7 @@
   async function open(o = {}) {
     opts = o; changed = false;
     if (!el) build();
-    show(o.tab || 'providers');
+    show(o.tab || 'general');
     openModal(el, () => { if (opts.onClose) opts.onClose(changed); });
     if (!mounted) {
       mounted = true;

@@ -343,7 +343,7 @@
     menu.addEventListener('click', e => {
       const o = e.target.closest('.opt'); if (!o) return;
       if (dd === ddTheme) {
-        if (o.dataset.v === 'settings') { closeMenus(); return openSettings(); }
+        if (o.dataset.v === 'settings') { closeMenus(); return openSettings('providers'); }
         const [k, v] = o.dataset.v.split(':');
         prefs[k] = v; save(localStorage, PREFS_KEY, prefs); applyTheme();
         dd.querySelector(`.opt[data-v="${o.dataset.v}"]`).focus();   // le menu reste ouvert pour comparer les thèmes
