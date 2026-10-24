@@ -19,6 +19,16 @@ node tests/e2e/browser.mjs        # parcours navigateur réel (Chrome/Chromium r
 ./bin/livequill          # dashboard; add any local project as a site
 ```
 
+Packaging and the installer:
+
+```bash
+python3 scripts/build-pyz.py                          # dist/livequill.pyz, the file install.sh downloads
+scripts/test-install.sh debian:12 'apt-get update -qq && apt-get install -y -qq python3'   # install.sh in a clean container (Docker)
+scripts/test-install.sh --host                        # install.sh on this machine, in a temporary HOME
+```
+
+Releases are automated: bump `version` in `pyproject.toml` and `livequill/__init__.py`, merge, then push a tag `vX.Y.Z`. The release workflow builds the wheel, the sdist and `livequill.pyz`, publishes the GitHub release, and publishes to PyPI.
+
 ## Common contributions
 
 ### A new provider

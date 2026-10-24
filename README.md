@@ -26,6 +26,7 @@ A floating prompt bar for any local site: type a change, the model of your choic
 - **Any model.** Claude, GPT, Gemini, Mistral, OpenRouter, local models through Ollama, LM Studio or llama.cpp, any OpenAI-compatible server, or the Claude Code, Codex and Gemini CLIs you already use. No CLI? The agent built into the **Claude Desktop** or **ChatGPT** app works too.
 - **All your sites in one place.** A dashboard lists your projects. Each one is served as-is or behind your dev server (Vite, Next, Astro…).
 - **Safe by default.** Sandboxed file tools, a backup before every edit, one-click **Undo**, and API keys that never reach the browser.
+- **Every request is a version.** Browse them in the bar, preview any of them live without touching your files, and go back to it in one click.
 - **Nothing to install in your project.** The bar is added while pages are served, never written to disk. **Zero dependencies**: just Python.
 
 ## Quick start
@@ -33,10 +34,22 @@ A floating prompt bar for any local site: type a change, the model of your choic
 You need **Python 3.10+**, nothing else. Runs on Linux and macOS (Windows is not supported).
 
 ```bash
-git clone https://github.com/Ybucaille/livequill.git
-cd livequill
-./bin/livequill
+curl -fsSL https://ybucaille.github.io/livequill/install.sh | sh
+livequill
 ```
+
+The script installs a single file, `livequill.pyz` from the [latest release](https://github.com/Ybucaille/livequill/releases/latest), after checking its SHA-256. It goes in `~/.local/share/livequill`, with the `livequill` command in `~/.local/bin`. It needs no root, no git and no pip. Run it again to upgrade. It is tested on Ubuntu, Debian, Fedora, Rocky Linux, Arch, Alpine, openSUSE and macOS. If Python is missing, it tells you the command for your distribution.
+
+<details>
+<summary>Other ways to install</summary>
+
+| | |
+|---|---|
+| **pipx / uv** | `pipx install livequill` or `uv tool install livequill` (from [PyPI](https://pypi.org/project/livequill/)) |
+| **Single file** | Download `livequill.pyz` from a [release](https://github.com/Ybucaille/livequill/releases) and run `python3 livequill.pyz` |
+| **From source** | `git clone https://github.com/Ybucaille/livequill.git && ./livequill/bin/livequill` |
+
+</details>
 
 Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal to stop it.
 
@@ -47,12 +60,9 @@ Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal to stop it.
 Handy shortcuts:
 
 ```bash
-./bin/livequill ~/projects/my-site                            # add this folder and open it
-./bin/livequill --proxy http://localhost:5173 ~/projects/app   # same, behind your dev server
-ln -s "$PWD/bin/livequill" ~/.local/bin/livequill              # make `livequill` available everywhere
+livequill ~/projects/my-site                            # add this folder and open it
+livequill --proxy http://localhost:5173 ~/projects/app   # same, behind your dev server
 ```
-
-Prefer an install? `pipx install git+https://github.com/Ybucaille/livequill.git` gives you the `livequill` command.
 
 <details>
 <summary>All command-line options</summary>
@@ -97,6 +107,7 @@ Prefer an install? `pipx install git+https://github.com/Ybucaille/livequill.git`
 | **Page context** | The current route, the matching HTML file, the visible headings and your text selection are sent along, so “the title” means what you see. |
 | **History** | Earlier requests of the project are replayed as plain text, so context survives a model switch. **New** starts over. |
 | **Undo** | Restores the files changed by the last request. Works several times in a row, and for CLI agents too. |
+| **Versions** | The clock button lists every request as a version: when, which model, which files. Select one to see a live preview of the site at that point, open it in a tab, or go back to it in one click. |
 | **Small models** | No tool-call support? LiveQuill falls back to a text protocol (`tool` blocks and `SEARCH/REPLACE` edits) and nudges models that stop halfway. |
 
 ## Providers
@@ -207,7 +218,6 @@ Register it in `KINDS` (`livequill/adapters/__init__.py`), and the setup page an
 
 ### Planned
 
-- **Automatic snapshots with previews.** A snapshot of the site after every change made by the model, shown in a timeline in the bar. Each snapshot comes with a preview, so you can find your way: a thumbnail of the page, the request that produced it and the files it changed. Open any version live to check it, then restore it in one click, not only the last one.
 - **Dynamic sites with a mock database.** Support for sites with a backend and a database, plugged into a disposable mock database seeded with demo data, so the model can work on data-driven pages without ever touching real data.
 
 ### Ideas
@@ -237,11 +247,11 @@ Yes. Keep your dev server running and add the site with its URL (or run `livequi
 
 ### What if the model breaks something?
 
-Click **Undo** in the bar. The files changed by the last request are restored from the backup taken just before the edit, and you can undo several requests in a row.
+Click **Undo** in the bar. The files changed by the last request are restored from the backup taken just before the edit, and you can undo several requests in a row. To go further back, open **Versions** (the clock button), preview the version you want, and click **Revenir à cette version**.
 
 ### Where is my data stored, and how do I uninstall?
 
-Your providers, keys and sites live in `~/.config/livequill/config.json`. Each project gets a `.livequill/` folder with its backups and conversation history. To uninstall, delete the cloned folder (or `pipx uninstall livequill`), `~/.config/livequill/` and the `.livequill/` folders you no longer need.
+Your providers, keys and sites live in `~/.config/livequill/config.json`. Each project gets a `.livequill/` folder with its backups and conversation history. To uninstall, run `curl -fsSL https://ybucaille.github.io/livequill/install.sh | sh -s -- --uninstall` (or `pipx uninstall livequill`, or delete the cloned folder). Then delete `~/.config/livequill/` and the `.livequill/` folders you no longer need.
 
 ### I only have the Claude Desktop or ChatGPT app. Does it work?
 
@@ -257,7 +267,7 @@ Contributions are welcome: adapters, themes, roadmap items, fixes and translatio
 
 ```bash
 python3 -m unittest discover -s tests     # about 8 s, no network
-node tests/e2e/browser.mjs                # real headless Chrome: edit → reload → undo
+node tests/e2e/browser.mjs                # real headless Chrome: edit → reload → undo → versions
 ```
 
 ## License

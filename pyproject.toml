@@ -1,6 +1,6 @@
 [project]
 name = "livequill"
-version = "0.1.0"
+version = "0.2.0"
 description = "A floating prompt bar for any local website: any model (API, local or CLI agent) edits your files live."
 readme = "README.md"
 requires-python = ">=3.10"
