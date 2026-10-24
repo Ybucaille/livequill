@@ -40,7 +40,10 @@ SYSTEM = """You are a web development agent inside a live-edit tool. The user is
 Rules:
 - All paths are relative to the project root. .git/, node_modules/, .env* and .livequill/ are off limits.
 - Find the relevant code with `search` first (files can be huge), then `read_file` around the matches.
-- Make the smallest change that does what was asked, with `edit_file` (old_text copied exactly from the file). Use `write_file` only for new files or tiny files.
+- Do what was asked, without touching unrelated code. Edit existing files with `edit_file` (old_text copied exactly from the file); create new files with `write_file`.
+- Build it like a real product, not a one-off page: follow the project's existing structure and conventions. Put new behavior in its own JavaScript file (for example js/<feature>.js) and new styles in a CSS file, linked from the HTML; keep HTML files for structure and content. Store images and media in assets/. Never put large scripts or style blocks inline.
+- If the project uses a framework or has a package.json, follow its conventions and file layout.
+- Libraries can be loaded by the page from a CDN (for example https://cdn.jsdelivr.net/npm/...) with a <script> tag or an import map.
 - Words like "title", "button" or "text" mean what the user SEES on the page (see the visible headings), not the HTML <title> tag.
 - Never reformat or rewrite unrelated code. Do not ask for confirmation: act, then stop.
 - When finished, answer in one or two short sentences, in the user's language, saying what you changed. If you could not do it, say why."""
@@ -51,9 +54,12 @@ CLI_SYSTEM = """You are a web development agent inside a live-edit tool. The use
 
 Rules:
 - Only read and modify files inside the current directory. Never touch .git/, node_modules/ or .env* files.
-- Do not install packages, start servers or use the network.
-- Make the smallest change that does what was asked. Never reformat or rewrite unrelated code. Do not ask for confirmation: act, then stop.
-- Attachments are files you can read at the paths given.
+- Do not install packages, start servers or use the network yourself.
+- Do what was asked, without touching unrelated code. Never reformat or rewrite unrelated code. Do not ask for confirmation: act, then stop.
+- Build it like a real product, not a one-off page: follow the project's existing structure and conventions. Put new behavior in its own JavaScript file (for example js/<feature>.js) and new styles in a CSS file, linked from the HTML; keep HTML files for structure and content. Store images and media in assets/. Never put large scripts or style blocks inline.
+- If the project uses a framework or has a package.json, follow its conventions and file layout.
+- Libraries can be loaded by the page from a CDN (for example https://cdn.jsdelivr.net/npm/...) with a <script> tag or an import map.
+- Attached images are already copied into the project at the paths given: use those paths in the page. Other attachments can be read at their paths.
 - When finished, answer in one or two short sentences, in the user's language, saying what you changed."""
 
 TEXT_PROTOCOL = """
@@ -283,15 +289,40 @@ def run(ctx, job):
     return answer, tx.files
 
 
+def place_images(project, atts):
+    """Images jointes -> assets/ du site (nom libre, suffixe s'il est pris). Renvoie {nom : chemin relatif}."""
+    placed = {}
+    for a in atts:
+        if not a['mime'].startswith('image/'):
+            continue
+        base, ext = os.path.splitext(a['name'])
+        rel, n = f'assets/{a["name"]}', 2
+        while os.path.lexists(os.path.join(project.root, rel)):
+            with open(os.path.join(project.root, rel), 'rb') as f:
+                if f.read() == a['bytes']:
+                    break                       # même image déjà présente : on la réutilise
+            rel, n = f'assets/{base}-{n}{ext}', n + 1
+        else:
+            project.write_bytes(rel, a['bytes'])
+        placed[a['name']] = rel
+    return placed
+
+
 def run_cli(ctx, job, ad, model, opts, atts, tx):
     project, req = ctx.project, job.req
-    notes = [f'- {a["name"]}: {project.rel(a["path"])}' for a in atts]
+    snap = Snapshot(project)     # refuse (SnapshotTooLarge) avant de lancer l'agent si l'annulation ne peut pas être garantie
+    try:
+        placed = place_images(project, atts)   # après l'instantané : l'annulation retire aussi ces copies
+    except Exception:
+        snap.close()
+        raise
+    notes = [f'- {a["name"]}: {placed[a["name"]]} (in the project)' if a['name'] in placed else f'- {a["name"]}: {project.rel(a["path"])}'
+             for a in atts]
     prompt = build_prompt(project, req, notes, ctx.mode)
     hist = history_messages(ctx.conversation.load(), 5)
     if hist:
         prompt = 'Earlier in this session:\n' + '\n'.join(f'{m["role"]}: {text_of(m["content"])}' for m in hist) + '\n\n' + prompt
     prompt = CLI_SYSTEM + '\n\n' + prompt
-    snap = Snapshot(project)     # refuse (SnapshotTooLarge) avant de lancer l'agent si l'annulation ne peut pas être garantie
     try:
         def emit(ev):    # chemins affichés relatifs au projet
             for k in ('summary', 'path'):

@@ -39,8 +39,8 @@ class Live:
         c.close()
         return r.status, json.loads(raw) if raw[:1] in (b'{', b'[') else raw
 
-    def ask(self, text, provider, model):
-        s, r = self.call('POST', '/__lq/api/prompt', {'text': text, 'provider': provider, 'model': model,
+    def ask(self, text, provider, model, files=None):
+        s, r = self.call('POST', '/__lq/api/prompt', {'text': text, 'provider': provider, 'model': model, 'files': files or [],
                                                       'page': {'pathname': '/', 'hash': ''}})
         assert s == 200, r
         return self.events(r['job'])
@@ -75,6 +75,7 @@ FAKE_CLAUDE = textwrap.dedent('''\
     """Doublure de Claude Code : lit la demande sur stdin, modifie le projet comme le vrai, parle en stream-json."""
     import json, os, sys
     args, prompt = sys.argv[1:], sys.stdin.read()
+    open(os.path.join(os.environ.get('LQ_PROMPT_DIR', '.'), 'prompt.txt'), 'w').write(prompt) if os.environ.get('LQ_PROMPT_DIR') else None
     assert '--restricted' in args and '--strict-mcp-config' in args, args
     if 'outside' in prompt:                       # tentative d'écrire hors du projet : refusée comme le vrai le ferait
         print(json.dumps({{"type": "result", "result": "refused", "is_error": False}}))
@@ -146,6 +147,32 @@ class RealCliAgent(unittest.TestCase):
         self.assertTrue(self.live.wait_reload(gen))
         self.assertEqual(self.live.call('GET', '/__lq/api/state')[1]['conversation'][-1]['status'], 'undone')
         self.assertFalse(os.listdir(os.path.join(self.root, '.livequill', 'tmp')))   # copies temporaires nettoyées
+
+
+PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+
+class CliAttachments(RealCliAgent):
+    """Une image jointe devient un fichier du site (assets/) que l'agent CLI peut utiliser ; Annuler la retire."""
+
+    def test_image_is_copied_into_assets(self):
+        self.promptdir = tempfile.mkdtemp(prefix='lq-prompt-')
+        with mock.patch.dict(os.environ, {'LQ_PROMPT_DIR': self.promptdir}):
+            evs = self.live.ask('use this as the logo', 'cli-claude', 'haiku', files=[{'name': 'logo.png', 'type': 'image/png', 'data': PNG}])
+        self.assertFalse(evs[-1].get('error'), evs)
+        with open(os.path.join(self.root, 'assets', 'logo.png'), 'rb') as f:
+            self.assertTrue(f.read().startswith(b'\x89PNG'))
+        with open(os.path.join(self.promptdir, 'prompt.txt')) as f:
+            prompt = f.read()
+        self.assertIn('logo.png: assets/logo.png', prompt)
+        self.assertIn('its own JavaScript file', prompt)             # consignes d'architecture
+        self.assertIn('assets/logo.png', evs[-1]['files'])
+        self.assertTrue(self.live.call('POST', '/__lq/api/undo', {})[1]['ok'])
+        self.assertFalse(os.path.exists(os.path.join(self.root, 'assets', 'logo.png')))
+        cleanup(self.promptdir)
+
+    def test_edit_reload_undo(self):      # déjà couvert par RealCliAgent
+        pass
 
 
 class FakeOpenAI(http.server.BaseHTTPRequestHandler):
