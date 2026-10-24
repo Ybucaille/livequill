@@ -59,7 +59,12 @@ writeFileSync(join(work, 'config.json'), JSON.stringify({
 }));
 
 let lq, chrome;
-function cleanup() { try { chrome?.kill(); } catch {} try { lq?.kill(); } catch {} model.close(); rmSync(work, { recursive: true, force: true }); }
+function cleanup() {
+  try { chrome?.kill(); } catch {} try { lq?.kill(); } catch {} model.close();
+  // Chrome peut encore écrire dans son profil juste après kill() : on réessaie, et un échec de nettoyage n'est pas un échec du test
+  try { rmSync(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch (e) { console.warn('nettoyage incomplet :', e.message); }
+}
+const stopChrome = () => new Promise(r => { if (!chrome || chrome.exitCode !== null) return r(); chrome.once('exit', r); chrome.kill(); setTimeout(r, 5000); });
 const timer = setTimeout(() => fail('délai dépassé (90 s)'), 90_000);
 
 lq = spawn('python3', [join(REPO, 'bin/livequill'), site, '--port', String(18000 + Math.floor(Math.random() * 1000)), '--no-open', '--config', join(work, 'config.json')],
@@ -120,5 +125,6 @@ console.log('✓ annulation appliquée, fichier identique à l’original');
 
 clearTimeout(timer);
 ws.close();
+await stopChrome();
 cleanup();
 console.log('✓ parcours navigateur réussi');
