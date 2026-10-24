@@ -1,5 +1,5 @@
 """Non-régression des défauts trouvés à l'audit : annulation après un agent CLI, liens symboliques, TOCTOU, isolation."""
-import http.client, os, threading, unittest
+import http.client, os, threading, time, unittest
 from unittest import mock
 
 from helpers import FakeTransport, cleanup, temp_project
@@ -170,6 +170,33 @@ class StaticSymlinks(unittest.TestCase):
                 self.assertEqual(status, 404)
                 self.assertNotIn(b'SECRET', body)
         self.assertEqual(self.get('/index.html')[0], 200)
+
+
+class SingleReload(unittest.TestCase):
+    """Une annulation ou un retour de version recharge la page une fois, pas deux (signal + surveillance des fichiers)."""
+
+    def setUp(self):
+        self.root = temp_project({'index.html': 'v1'})
+        from livequill.server import Reloader
+        self.r = Reloader(Project(self.root))
+        time.sleep(0.6)                                  # premier état relevé par la surveillance
+
+    def tearDown(self):
+        self.r.alive = False
+        cleanup(self.root)
+
+    def test_explicit_bump_is_not_repeated_by_the_watcher(self):
+        with open(os.path.join(self.root, 'index.html'), 'w') as f:
+            f.write('v2')
+        self.r.bump(0.05)
+        time.sleep(1.6)
+        self.assertEqual(self.r.gen, 1)
+
+    def test_manual_edit_still_reloads(self):
+        with open(os.path.join(self.root, 'index.html'), 'w') as f:
+            f.write('v3, by hand')
+        time.sleep(1.2)
+        self.assertEqual(self.r.gen, 1)
 
 
 class AgentIsolation(unittest.TestCase):

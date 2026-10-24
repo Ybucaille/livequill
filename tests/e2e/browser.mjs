@@ -104,6 +104,8 @@ const js = async expr => (await cdp('Runtime.evaluate', { expression: expr, awai
 const until = async (what, cond, ms = 30_000) => { for (let t = 0; t < ms; t += 200) { if (await cond()) return; await sleep(200); } fail('attendu : ' + what); };
 const bar = q => `document.getElementById('livequill')?.shadowRoot?.querySelector(${JSON.stringify(q)})`;
 const h1 = () => js(`document.querySelector('h1')?.textContent`);
+// La page ne recharge plus depuis 1,5 s : un clic ne peut pas être perdu dans un rechargement en cours
+const settle = async () => { for (let n = loaded; ; n = loaded) { await sleep(1500); if (loaded === n) return; } };
 
 await cdp('Page.enable');
 await cdp('Page.navigate', { url: siteUrl });
@@ -137,6 +139,7 @@ const beforeSecond = loaded;
 for (const type of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
 await until('le rechargement après la 2e modification', async () => loaded > beforeSecond);
 await until('le titre modifié à nouveau', async () => (await h1()) === 'Salut');
+await settle();
 await until('la barre prête', () => js(`!!${bar('.histbtn')}`));
 await js(`${bar('[data-view=versions]')}.click()`);
 const versBtn = id => `[...document.getElementById('livequill').shadowRoot.querySelectorAll('.ver')].find(b => b.dataset.id === ${JSON.stringify(id)})`;
@@ -147,6 +150,7 @@ await until('l’aperçu vivant de la version d’origine', () =>
 console.log('✓ aperçu de la version d’origine affiché sans rien restaurer');
 if (!readFileSync(join(site, 'index.html'), 'utf8').includes('Salut')) fail('l’aperçu ne doit pas modifier le site');
 await js('window.confirm = () => true');
+await settle();
 const beforeRestore = loaded;
 await js(`${bar('[data-restore]')}.click()`);
 await until('le rechargement après le retour de version', async () => loaded > beforeRestore);
@@ -155,6 +159,8 @@ if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le retour de 
 console.log('✓ retour à la version d’origine');
 
 // 3 bis. Réglages depuis la barre : fenêtre flottante par-dessus le site, sans quitter la page
+await settle();
+await until('la barre après le retour de version', () => js(`!!${bar('.dd[data-key=theme] .dd-btn')}`));
 const pageBefore = await js('location.href');
 await js(`${bar('.dd[data-key=theme] .dd-btn')}.click()`);
 await until('le menu réglages de la barre', () => js(`!!${bar('.opt[data-v=settings]')}`));

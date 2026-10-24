@@ -78,12 +78,18 @@ class Reloader:
         self.project, self.gen, self.cond = project, 0, threading.Condition()
         self.paused = False
         self.alive = True
+        self.resync = False
         if watch:
             threading.Thread(target=self._watch, daemon=True).start()
 
     def bump(self, delay=0.0):
+        # Les fichiers que l'appelant vient d'écrire sont annoncés par ce signal : la surveillance repart de leur nouvel
+        # état au lieu de les annoncer une seconde fois (sinon la page recharge deux fois de suite)
+        self.resync = True
+
         def go():
             time.sleep(delay)
+            self.resync = True
             with self.cond:
                 self.gen += 1
                 self.cond.notify_all()
@@ -107,8 +113,11 @@ class Reloader:
         while self.alive:
             time.sleep(0.5)
             now = self._state()
-            if now != last and not self.paused:   # pendant une demande, c'est la fin de la demande qui recharge
+            if self.resync:
+                self.resync = False
+            elif now != last and not self.paused:   # pendant une demande, c'est la fin de la demande qui recharge
                 self.bump()
+                self.resync = False                 # ce changement vient d'ici : rien à resynchroniser
             last = now
 
     def stop(self):
