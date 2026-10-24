@@ -253,7 +253,7 @@
         const url = `/__lq/preview/${encodeURIComponent(v.id)}/${page}`;
         const pv = v.now ? '<div class="note">C’est la version affichée en ce moment.</div>'
           : versions.mode === 'proxy' ? '<div class="note">Aperçu indisponible derrière un serveur de dev : le résumé ci-dessus décrit la version.</div>'
-          : `<div class="pv"><iframe src="${url}" loading="lazy" tabindex="-1" title="Aperçu de la version"></iframe></div>`;
+          : `<div class="pv"><iframe src="${url}" tabindex="-1" title="Aperçu de la version"></iframe></div>`;
         const acts = v.now ? '' : `<div class="vacts">${versions.mode === 'proxy' ? '' : `<button type="button" data-open="${esc(url)}">${icon(I.ext)}Ouvrir l’aperçu</button>`}
           <button type="button" class="pri" data-restore="${esc(v.id)}" data-newer="${v.newer}">${icon(I.undo)}Revenir à cette version</button></div>`;
         detail = `<div class="vd">${chips}${pv}${acts}</div>`;
@@ -263,6 +263,12 @@
     }).join('');
     const pv = versEl.querySelector('.pv');
     if (pv) { const f = pv.querySelector('iframe'), fit = () => { f.style.transform = `scale(${pv.clientWidth / 1280})`; }; fit(); new ResizeObserver(fit).observe(pv); }
+    // la version choisie est souvent en bas de la liste : on fait défiler pour voir son aperçu, titre compris
+    const sel = versEl.querySelector('.ver.sel'), vd = versEl.querySelector('.vd');
+    if (sel && vd) {
+      const box = versEl.getBoundingClientRect(), top = sel.getBoundingClientRect().top - box.top, bottom = vd.getBoundingClientRect().bottom - box.top;
+      if (bottom > versEl.clientHeight || top < 0) versEl.scrollTop += Math.min(top - 6, bottom - versEl.clientHeight + 6);
+    }
   }
   versEl.addEventListener('click', async e => {
     const open = e.target.closest('[data-open]'), restore = e.target.closest('[data-restore]'), item = e.target.closest('.ver');
