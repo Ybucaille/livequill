@@ -14,9 +14,9 @@ A floating prompt bar for any local site: type a change, the model of your choic
 
 [**Website**](https://ybucaille.github.io/livequill/) · [Quick start](#quick-start) · [Providers](#providers) · [Roadmap](#roadmap) · [FAQ](#faq)
 
-<a href="https://ybucaille.github.io/livequill/"><img src="docs/demo.gif" alt="LiveQuill demo: first launch, a provider is set up, a site is added and opened, a request turns the title red, then Undo restores it" width="860"></a>
+<a href="https://ybucaille.github.io/livequill/"><img src="docs/demo.gif" alt="LiveQuill demo: first launch, a provider is set up, a site is created from the business template and opened, a request turns the title red, the original version is previewed, then Undo restores it" width="860"></a>
 
-<sub>A real, unedited first run: setup → add a site → “make the hero title red” → Undo → switch theme. <a href="docs/demo.mp4">MP4 version</a>.</sub>
+<sub>A real, unedited first run with Claude Code (Haiku): setup → new site from a template → “make the hero title red” → version preview → Undo → switch theme. <a href="docs/demo.mp4">MP4 version</a>.</sub>
 
 </div>
 

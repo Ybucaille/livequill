@@ -148,6 +148,7 @@
     $('#pf-title').textContent = id ? t('Edit · {name}', { name: p.label || d.label }) : t(d.label) + (type === 'custom' ? ' · ' + t('OpenAI-compatible') : '');
     $('#pf-howto').innerHTML = howto(type);
     $('#pf-label').value = p.label || '';
+    $('#pf-label').placeholder = t('e.g. {name} on my laptop', { name: t(d.label) });
     let f = '';
     if (d.fields.includes('base_url')) f += field('pf-base', t('Base URL'), 'url', p.base_url, BASES[type] || '');
     if (d.fields.includes('key')) {
