@@ -1,5 +1,5 @@
 """Serveur : sert le site (dossier ou proxy), y ajoute la barre à la volée, et expose l'API /__lq/."""
-import hmac, http.client, http.server, json, os, re, secrets, socket, socketserver, threading, time, traceback
+import hmac, http.client, http.server, json, mimetypes, os, re, secrets, socket, socketserver, threading, time, traceback
 import urllib.parse
 
 from . import adapters, agent
@@ -17,7 +17,10 @@ HTML_END = re.compile(rb'</html\s*>', re.I)
 
 def inject(html, token):
     """Ajoute le script de la barre avant le dernier </body> (sinon </html>, sinon à la fin). Rien n'est écrit sur disque."""
-    tag = f'<script src="/__lq/overlay.js" data-lq-token="{token}" defer></script>'.encode()
+    return inject_tag(html, f'<script src="/__lq/overlay.js" data-lq-token="{token}" defer></script>'.encode())
+
+
+def inject_tag(html, tag):
     for rx in (BODY_END, HTML_END):
         hits = list(rx.finditer(html))
         if hits:
@@ -160,6 +163,26 @@ class App:
             self.reloader.paused = False
             if job.files:
                 self.reloader.bump(0.4)   # laisse le temps à « done » d'arriver avant le rechargement
+
+    def versions(self):
+        models = {t.get('job'): t.get('model') for t in self.conversation.load()}
+        out = self.history.versions()
+        for v in out:
+            v['model'] = models.get(v['job'])
+        return {'versions': out, 'mode': self.mode}
+
+    def restore_version(self, version):
+        if self.job and not self.job.done:
+            return {'ok': False, 'message': 'Une demande est en cours'}
+        try:
+            done = self.history.restore_to(version)
+        except PathError as e:
+            return {'ok': False, 'message': str(e)}
+        for job_id, _ in done:
+            self.conversation.mark(job_id, status='undone')
+        if done:
+            self.reloader.bump(0.3)
+        return {'ok': True, 'undone': len(done), 'undo': self.history.count()}
 
     def undo(self):
         if self.job and not self.job.done:
@@ -528,11 +551,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.send_bytes(html, 'text/html; charset=utf-8',
                                    extra={'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'",
                                           'Referrer-Policy': 'no-referrer'})
+        m = re.fullmatch(r'/__lq/preview/([\w.-]+)(/.*)?', p)
+        if m and method == 'GET' and app.project is not None:
+            return self.preview(m.group(1), urllib.parse.unquote(m.group(2) or '/'))
         if not self.same_origin() or not self.token_ok(q):
             return self.deny(403, 'jeton ou origine invalide')
         hub = app.project is None
         site_only = p in ('/__lq/reload', '/__lq/api/state', '/__lq/api/prompt', '/__lq/api/undo',
-                          '/__lq/api/conversation/clear') or p.startswith('/__lq/api/jobs/')
+                          '/__lq/api/conversation/clear') or p.startswith(('/__lq/api/jobs/', '/__lq/api/versions'))
         hub_only = p.startswith('/__lq/api/sites') or p == '/__lq/api/browse'
         if (hub and site_only) or (not hub and hub_only):
             return self.deny(404, 'introuvable')
@@ -544,6 +570,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if method == 'GET':
             if p == '/__lq/api/state':
                 return self.send_json(app.state())
+            if p == '/__lq/api/versions':
+                return self.send_json(app.versions())
             if p == '/__lq/api/detect':
                 return self.send_json(app.detect())
             if p == '/__lq/api/status':
@@ -588,6 +616,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json({'ok': bool(job)})
             if p == '/__lq/api/undo':
                 return self.send_json(app.undo())
+            if p == '/__lq/api/versions/restore':
+                return self.send_json(app.restore_version(str(body.get('id') or '')))
             if p == '/__lq/api/conversation/clear':
                 app.conversation.clear()
                 return self.send_json({'ok': True})
@@ -675,6 +705,36 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     break
         except (BrokenPipeError, ConnectionResetError, OSError):
             pass
+
+    # --- aperçu d'une version (les mêmes règles que les fichiers servis, sans la barre) -------------
+    def preview(self, version, path):
+        app = self.app
+        if app.proxy:
+            return self.send_error(404, 'apercu indisponible derriere un serveur de dev')
+        parts = [x for x in path.split('/') if x]
+        if denied(parts):
+            return self.send_error(404)
+        try:
+            real = app.project.resolve('/'.join(parts), allow_root=True)
+            if path.endswith('/') or not parts or os.path.isdir(real):
+                parts.append('index.html')
+                real = app.project.resolve('/'.join(parts))
+            src = app.history.file_at(version, '/'.join(parts))
+        except PathError:
+            return self.send_error(404)
+        if src is None or (src == 'current' and not os.path.isfile(real)):
+            return self.send_error(404)
+        with open(real if src == 'current' else src, 'rb') as f:
+            data = f.read()
+        ctype = mimetypes.guess_type(parts[-1])[0] or 'application/octet-stream'
+        if ctype == 'text/html':
+            label = 'avant toute modification' if version == 'origin' else \
+                time.strftime('version du %d/%m à %H:%M', time.localtime(app.history.manifest(version)['time']))
+            data = inject_tag(data, ('<div style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483647;'
+                                     'padding:7px 14px;border-radius:999px;background:#d97757;color:#fff;font:600 13px system-ui,sans-serif;'
+                                     f'box-shadow:0 6px 20px rgba(0,0,0,.3)">Aperçu · {label}</div>').encode())
+            ctype += '; charset=utf-8'
+        return self.send_bytes(data, ctype)
 
     # --- mode dossier statique -------------------------------------------
     def static(self, method, u):

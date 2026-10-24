@@ -340,7 +340,8 @@ class HistoryStore:
         ensure_workdir(self.project)
         with self.lock:
             _private_dir(self.dir)
-            d = _private_dir(os.path.join(self.dir, f'{time.strftime("%Y%m%d-%H%M%S")}-{tx.id}'))
+            # le nom porte les nanosecondes : l'ordre alphabétique reste l'ordre chronologique, même à la même seconde
+            d = _private_dir(os.path.join(self.dir, f'{time.strftime("%Y%m%d-%H%M%S")}-{time.time_ns() % 1_000_000_000:09d}-{tx.id}'))
             files = _private_dir(os.path.join(d, 'files'))
             entries = []
             for i, rel in enumerate(tx.order):
@@ -361,6 +362,45 @@ class HistoryStore:
 
     def count(self):
         return len(self.entries())
+
+    def manifest(self, name):
+        with open(os.path.join(self.dir, name, 'manifest.json'), encoding='utf-8') as f:
+            return json.load(f)
+
+    def versions(self):
+        """Versions du site, de la plus récente à la plus ancienne : chacune est l'état juste après une demande."""
+        out = []
+        for name in reversed(self.entries()):
+            m = self.manifest(name)
+            out.append({'id': name, 'job': m['job'], 'prompt': m['prompt'], 'time': m['time'], 'files': [e['path'] for e in m['files']]})
+        return out
+
+    def file_at(self, version, rel):
+        """Où lire un fichier tel qu'il était à une version (« origin » = avant toute modification) : le chemin de la
+        copie gardée par la première demande plus récente qui l'a touché, None s'il n'existait pas, 'current' sinon."""
+        names = self.entries()
+        if version == 'origin':
+            later = names
+        elif version in names:
+            later = names[names.index(version) + 1:]
+        else:
+            raise PathError('version inconnue')
+        for name in later:
+            for e in self.manifest(name)['files']:
+                if e['path'] == rel:
+                    if e.get('blob'):
+                        return os.path.join(self.dir, name, 'files', e['blob'])
+                    return 'current' if 'link' in e else None
+        return 'current'
+
+    def restore_to(self, version):
+        """Revient à une version en annulant une à une les demandes plus récentes. Renvoie les annulations faites."""
+        if version != 'origin' and version not in self.entries():
+            raise PathError('version inconnue')
+        done = []
+        while self.entries() and self.entries()[-1] != version:
+            done.append(self.undo())
+        return done
 
     def _restore(self, e, d):
         """Remet un fichier dans son état d'origine. Un lien posé à sa place (ou à la place d'un dossier parent) est

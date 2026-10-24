@@ -123,6 +123,30 @@ await until('le titre d’origine', async () => (await h1()) === 'Hello');
 if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le fichier n’est pas revenu à l’identique');
 console.log('✓ annulation appliquée, fichier identique à l’original');
 
+// 3. Nouvelle modification → Versions : aperçu vivant de l'état d'origine → « Revenir à cette version »
+await until('la barre après rechargement', () => js(`!!${bar('textarea')} && ${bar('.dd-btn span')}.textContent !== 'Chargement…'`));
+await js(`(() => { const t = ${bar('textarea')}; t.focus(); t.value = 'change le titre'; t.dispatchEvent(new Event('input')); })()`);
+const beforeSecond = loaded;
+for (const type of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+await until('le rechargement après la 2e modification', async () => loaded > beforeSecond);
+await until('le titre modifié à nouveau', async () => (await h1()) === 'Salut');
+await until('la barre prête', () => js(`!!${bar('.versbtn')}`));
+await js(`${bar('.versbtn')}.click()`);
+const versBtn = id => `[...document.getElementById('livequill').shadowRoot.querySelectorAll('.ver')].find(b => b.dataset.id === ${JSON.stringify(id)})`;
+await until('la liste des versions', () => js(`!!${versBtn('origin')}`));
+await js(`${versBtn('origin')}.click()`);
+await until('l’aperçu vivant de la version d’origine', () =>
+  js(`(() => { const f = ${bar('.pv iframe')}; return f && f.contentDocument && f.contentDocument.querySelector('h1')?.textContent === 'Hello'; })()`));
+console.log('✓ aperçu de la version d’origine affiché sans rien restaurer');
+if (!readFileSync(join(site, 'index.html'), 'utf8').includes('Salut')) fail('l’aperçu ne doit pas modifier le site');
+await js('window.confirm = () => true');
+const beforeRestore = loaded;
+await js(`${bar('[data-restore]')}.click()`);
+await until('le rechargement après le retour de version', async () => loaded > beforeRestore);
+await until('le titre de la version d’origine', async () => (await h1()) === 'Hello');
+if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le retour de version n’a pas rétabli le fichier à l’identique');
+console.log('✓ retour à la version d’origine');
+
 clearTimeout(timer);
 ws.close();
 await stopChrome();

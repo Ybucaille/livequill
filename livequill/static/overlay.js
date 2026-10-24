@@ -10,7 +10,7 @@
   const save = (s, k, v) => { try { s.setItem(k, JSON.stringify(v)); } catch (_) {} };
   const prefs = Object.assign({ model: '', effort: {}, fast: false, skin: 'claude', mode: 'auto' }, load(localStorage, PREFS_KEY, {}));
   if (typeof prefs.effort !== 'object') prefs.effort = {};
-  const ui = Object.assign({ panel: false }, load(sessionStorage, UI_KEY, {}));
+  const ui = Object.assign({ panel: false, view: 'log' }, load(sessionStorage, UI_KEY, {}));
   let state = null, files = [], job = null, es = null;
 
   const api = async (path, body) => {
@@ -26,7 +26,7 @@
   const I = {
     plus: 'M12 5v14M5 12h14', send: 'M12 19V5M5 12l7-7 7 7', stop: 'M7 7h10v10H7z', chev: 'm6 9 6 6 6-6', check: 'M20 6 9 17l-5-5',
     undo: 'M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11', gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
-    log: 'M4 6h16M4 12h16M4 18h10', palette: 'M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-1.7a1.8 1.8 0 0 0-1.3 3.1A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01', fast: 'M13 2 4 14h7l-1 8 9-12h-7z', trash: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14', x: 'M18 6 6 18M6 6l12 12'
+    log: 'M4 6h16M4 12h16M4 18h10', palette: 'M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-1.7a1.8 1.8 0 0 0-1.3 3.1A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01', fast: 'M13 2 4 14h7l-1 8 9-12h-7z', trash: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14', x: 'M18 6 6 18M6 6l12 12', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', ext: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'
   };
 
 
@@ -112,7 +112,7 @@
     .menu{position:absolute;right:0;bottom:calc(100% + 8px);min-width:250px;max-width:min(380px,calc(100vw - 40px));max-height:min(420px,60vh);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:5px;border:1px solid var(--line);border-radius:var(--menu-radius);background:var(--bg);box-shadow:var(--shadow)}
     .menu.left{right:auto;left:-6px}
     .menu[hidden]{display:none}
-    .menu,.log{scrollbar-width:thin;scrollbar-color:var(--thumb) transparent}
+    .menu,.log,.vers{scrollbar-width:thin;scrollbar-color:var(--thumb) transparent}
     .menu::-webkit-scrollbar,.log::-webkit-scrollbar{width:10px}
     .menu::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent}
     .menu::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb{background:var(--thumb);border-radius:10px;border:3px solid var(--bg)}
@@ -156,16 +156,35 @@
     .chips{display:flex;flex-wrap:wrap;gap:5px}
     .chip{padding:1px 7px;border-radius:6px;background:var(--acc-soft);color:var(--acc2);font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
     .think{color:var(--mute);font-size:12px;font-style:italic;white-space:pre-wrap;max-height:4.5em;overflow:hidden}
+    .log[hidden],.vers[hidden],.phead button[hidden]{display:none}
+    .vers{max-height:min(56vh,500px);overflow:auto;display:flex;flex-direction:column;gap:6px;padding:2px 6px 4px 4px;font-size:13.5px}
+    .vers .empty{color:var(--mute);font-size:13px;padding:4px 2px}
+    .ver{display:flex;flex-direction:column;align-items:stretch;gap:1px;width:100%;padding:8px 11px;border-radius:12px;background:var(--bubble);color:var(--ink);text-align:left}
+    .ver:hover{background:var(--hover)}
+    .ver.sel{box-shadow:inset 0 0 0 1.5px var(--acc)}
+    .vt{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .vm{font-size:11.5px;color:var(--mute)}
+    .vm b{color:var(--acc2);font-weight:600}
+    .vd{display:flex;flex-direction:column;gap:8px;padding:2px 2px 8px}
+    .vd .note{font-size:12.5px;color:var(--mute)}
+    .pv{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#fff}
+    .pv iframe{position:absolute;left:0;top:0;width:1280px;height:800px;border:0;transform-origin:0 0;pointer-events:none}
+    .vacts{display:flex;gap:8px;flex-wrap:wrap}
+    .vacts button{height:31px;padding:0 12px;font-size:13px;gap:6px;display:inline-flex;align-items:center;border:1px solid var(--line)}
+    .vacts button svg{width:14px;height:14px}
+    .vacts .pri{background:var(--acc-bg);color:var(--acc-ink);border-color:transparent}
+    .vacts .pri:hover{background:var(--acc-bg);color:var(--acc-ink);filter:brightness(1.1)}
     .dots::after{content:"…";animation:b 1s steps(3) infinite}
     @keyframes b{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
   </style>
   <div class="box">
     <span class="status" role="status"></span>
     <div class="panel">
-      <div class="phead"><b>Conversation</b>
+      <div class="phead"><b class="ptitle">Conversation</b>
         <button type="button" class="clear" title="Oublier l’historique de ce projet">${icon(I.trash)}Nouvelle</button>
         <button type="button" class="close" aria-label="Replier">${icon(I.x)}</button></div>
       <div class="log" aria-live="polite"></div>
+      <div class="vers" hidden></div>
     </div>
     <div class="files"></div>
     <textarea rows="1" placeholder="Demande une modif…" aria-label="Demande de modification"></textarea>
@@ -174,6 +193,7 @@
       <input type="file" multiple>
       <button class="icon panelbtn" type="button" aria-label="Afficher la conversation" title="Conversation et réponse en direct">${icon(I.log)}</button>
       <button class="icon undo" type="button" aria-label="Annuler la dernière modif" title="Annuler la dernière modif" disabled>${icon(I.undo)}</button>
+      <button class="icon versbtn" type="button" aria-label="Versions du site" title="Versions du site : aperçu et retour à n’importe quelle version">${icon(I.clock)}</button>
       <button class="icon gear" type="button" aria-label="Réglages des fournisseurs" title="Fournisseurs et modèles">${icon(I.gear)}</button>
       <div class="dd" data-key="theme"><button class="dd-btn icon" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Thème de la barre" title="Thème de la barre">${icon(I.palette)}</button><div class="menu left" role="listbox" hidden></div></div>
       <span class="grow"></span>
@@ -186,7 +206,7 @@
 
   const $ = s => root.querySelector(s);
   const box = $('.box'), ta = $('textarea'), send = $('.send'), status = $('.status'), list = $('.files'), picker = $('input[type=file]');
-  const fast = $('.fast'), logEl = $('.log'), undoBtn = $('.undo');
+  const fast = $('.fast'), logEl = $('.log'), undoBtn = $('.undo'), versEl = $('.vers');
   const dds = [...root.querySelectorAll('.dd')];
   const ddTheme = root.querySelector('.dd[data-key=theme]'), ddModel = root.querySelector('.dd[data-key=model]'), ddEffort = root.querySelector('.dd[data-key=effort]');
 
@@ -200,7 +220,62 @@
     undoBtn.disabled = running() || !(state && state.undo);
   };
   const grow = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; refresh(); };
-  const setPanel = open => { ui.panel = open; box.classList.toggle('open', open); $('.panelbtn').classList.toggle('on', open); save(sessionStorage, UI_KEY, ui); if (open) logEl.scrollTop = logEl.scrollHeight; };
+  const setPanel = (open, view) => {
+    ui.panel = open; if (view) ui.view = view;
+    const vers = ui.view === 'versions';
+    box.classList.toggle('open', open);
+    $('.panelbtn').classList.toggle('on', open && !vers); $('.versbtn').classList.toggle('on', open && vers);
+    logEl.hidden = vers; versEl.hidden = !vers; $('.clear').hidden = vers;
+    $('.ptitle').textContent = vers ? 'Versions du site' : 'Conversation';
+    save(sessionStorage, UI_KEY, ui);
+    if (open && vers) loadVersions();
+    else if (open) logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  /* --- versions : un instantané après chaque modification, aperçu vivant, retour à n'importe quelle version --- */
+  let versions = null, selV = null;
+  const when = t => new Date(t * 1000).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  async function loadVersions() {
+    try { versions = await api('versions'); renderVersions(); }
+    catch (e) { versEl.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  function renderVersions() {
+    const vs = versions.versions;
+    if (!vs.length) { versEl.innerHTML = '<div class="empty">Pas encore de version. Chaque modification faite par le modèle en crée une, que tu pourras prévisualiser et restaurer.</div>'; return; }
+    const items = vs.map((v, i) => ({ ...v, newer: i, now: i === 0 }))
+      .concat([{ id: 'origin', prompt: 'Avant toute modification', files: [], newer: vs.length, origin: true }]);
+    const page = location.pathname.replace(/^\//, '');
+    versEl.innerHTML = items.map(v => {
+      const meta = v.origin ? 'état de départ du site' : [when(v.time), v.model, `${v.files.length} fichier(s)`].filter(Boolean).join(' · ');
+      let detail = '';
+      if (v.id === selV) {
+        const chips = v.files.length ? `<div class="chips">${v.files.map(f => `<span class="chip">✎ ${esc(f)}</span>`).join('')}</div>` : '';
+        const url = `/__lq/preview/${encodeURIComponent(v.id)}/${page}`;
+        const pv = v.now ? '<div class="note">C’est la version affichée en ce moment.</div>'
+          : versions.mode === 'proxy' ? '<div class="note">Aperçu indisponible derrière un serveur de dev : le résumé ci-dessus décrit la version.</div>'
+          : `<div class="pv"><iframe src="${url}" loading="lazy" tabindex="-1" title="Aperçu de la version"></iframe></div>`;
+        const acts = v.now ? '' : `<div class="vacts">${versions.mode === 'proxy' ? '' : `<button type="button" data-open="${esc(url)}">${icon(I.ext)}Ouvrir l’aperçu</button>`}
+          <button type="button" class="pri" data-restore="${esc(v.id)}" data-newer="${v.newer}">${icon(I.undo)}Revenir à cette version</button></div>`;
+        detail = `<div class="vd">${chips}${pv}${acts}</div>`;
+      }
+      return `<button type="button" class="ver ${v.id === selV ? 'sel' : ''}" data-id="${esc(v.id)}"><span class="vt">${v.origin ? '' : '« '}${esc(v.prompt || '(pièces jointes)')}${v.origin ? '' : ' »'}</span>
+        <span class="vm">${v.now ? '<b>actuelle</b> · ' : ''}${esc(meta)}</span></button>${detail}`;
+    }).join('');
+    const pv = versEl.querySelector('.pv');
+    if (pv) { const f = pv.querySelector('iframe'), fit = () => { f.style.transform = `scale(${pv.clientWidth / 1280})`; }; fit(); new ResizeObserver(fit).observe(pv); }
+  }
+  versEl.addEventListener('click', async e => {
+    const open = e.target.closest('[data-open]'), restore = e.target.closest('[data-restore]'), item = e.target.closest('.ver');
+    if (open) return window.open(open.dataset.open, '_blank', 'noopener');
+    if (restore) {
+      const n = +restore.dataset.newer;
+      if (!confirm(`Revenir à cette version ? ${n} modification(s) plus récente(s) seront annulée(s).`)) return;
+      try { const r = await api('versions/restore', { id: restore.dataset.restore }); setStatus(r.ok ? 'Version restaurée — rechargement…' : r.message, !r.ok); selV = null; if (state) state.undo = r.undo || 0; refresh(); }
+      catch (err) { setStatus('Restauration impossible : ' + err.message, true); }
+      return;
+    }
+    if (item) { selV = selV === item.dataset.id ? null : item.dataset.id; renderVersions(); }
+  });
 
   /* --- modèles, réflexion, fast : selon les capacités du modèle choisi --- */
   const allModels = () => (state ? state.providers.flatMap(p => p.models.map(m => ({ ...m, pid: p.id, plabel: p.label, key: p.id + '::' + m.id }))) : []);
@@ -361,7 +436,7 @@
       const page = { pathname: location.pathname, search: location.search, hash: location.hash, title: document.title };
       const res = await api('prompt', { text, files, page, outline: outline(), selection: lastSel, provider: m.pid, model: m.id, effort: prefs.effort[m.key], fast: !!(m.caps.fast && prefs.fast) });
       ta.value = ''; files = []; lastSel = ''; renderFiles(); grow();
-      setPanel(true);
+      setPanel(true, 'log');
       follow(res.job, text);
     } catch (e) { setStatus('Échec de l’envoi : ' + e.message, true); refresh(); }
   }
@@ -371,7 +446,8 @@
     catch (e) { setStatus('Annulation impossible : ' + e.message, true); }
   });
   $('.gear').addEventListener('click', () => { location.href = '/__setup?next=' + encodeURIComponent(location.pathname + location.search + location.hash); });
-  $('.panelbtn').addEventListener('click', () => setPanel(!ui.panel));
+  $('.panelbtn').addEventListener('click', () => setPanel(!(ui.panel && ui.view === 'log'), 'log'));
+  $('.versbtn').addEventListener('click', () => setPanel(!(ui.panel && ui.view === 'versions'), 'versions'));
   $('.close').addEventListener('click', () => setPanel(false));
   $('.clear').addEventListener('click', async () => {
     if (running()) return;
@@ -391,7 +467,7 @@
     try {
       state = await api('state');
       pickDefault(); paint(); renderLog();
-      if (state.running) { setPanel(true); const t = (state.conversation || []).find(x => x.job === state.running); follow(state.running, t ? t.prompt : ''); }
+      if (state.running) { setPanel(true, 'log'); const t = (state.conversation || []).find(x => x.job === state.running); follow(state.running, t ? t.prompt : ''); }
       else {
         const last = (state.conversation || []).slice(-1)[0];
         if (last && last.status === 'ok' && last.files && last.files.length) setStatus(`✓ ${last.answer || 'Modifié'}`.slice(0, 140));
