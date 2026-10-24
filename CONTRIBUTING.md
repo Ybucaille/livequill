@@ -15,6 +15,7 @@ Thanks for taking the time to contribute! Bug reports, new provider adapters, th
 git clone https://github.com/Ybucaille/livequill.git
 cd livequill
 python3 -m unittest discover -s tests
+node tests/e2e/browser.mjs        # parcours navigateur réel (Chrome/Chromium requis)
 ./bin/livequill          # dashboard; add any local project as a site
 ```
 

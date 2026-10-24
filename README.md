@@ -112,8 +112,8 @@ Prefer an install? `pipx install git+https://github.com/Ybucaille/livequill.git`
 | **LM Studio** | *Developer* tab → *Start server*. |
 | **llama.cpp** | `llama-server -m model.gguf --jinja`. |
 | **Other** | Any OpenAI-compatible server (vLLM, LocalAI, Jan, Groq, DeepSeek…): base URL, optional key, model name. |
-| **Claude Code** | `claude` installed and logged in, **or just the Claude Desktop app** (see below). Runs with file edits allowed, **Bash and web tools disabled**. |
-| **Codex** | `codex` installed and logged in (`codex login`), **or just the ChatGPT or Codex app** (see below). Runs in its `workspace-write` sandbox, where Codex may run shell commands. |
+| **Claude Code** | `claude` installed and logged in, **or just the Claude Desktop app** (see below). Runs in `--restricted` mode: file tools confined to the project, no shell or web tools, no MCP servers, your user settings and hooks ignored. |
+| **Codex** | `codex` installed and logged in (`codex login`), **or just the ChatGPT or Codex app** (see below). Runs in its `workspace-write` sandbox with your `config.toml` ignored (no MCP servers, no extra writable folders, no network). **Codex can still read any file your user can read** and runs shell commands inside its sandbox: a Codex limitation, not something LiveQuill can restrict. |
 | **Gemini CLI** | `gemini` installed. *Experimental: not tested yet.* |
 
 ### Desktop apps, no CLI needed
@@ -137,8 +137,9 @@ LiveQuill lets a model touch your files, so the guard rails are on by default:
 
 - **Local only.** Servers listen on `127.0.0.1`, reject foreign `Host` headers (DNS rebinding), and require a per-launch session token plus a same-origin request on every API call.
 - **Keys stay server-side.** Stored in `~/.config/livequill/config.json` (folder `700`, file `600`), never sent to the browser, masked in error messages and logs.
-- **Sandboxed tools.** No path outside the project, no symlink escape, no `.git/`, `.env*` or `node_modules/`, and no shell commands for API and local models.
-- **Backups first.** Every file is saved to `<project>/.livequill/history/` before it changes. That folder ignores itself in git.
+- **Sandboxed tools.** No path outside the project, no `.git/`, `.env*` or `node_modules/`, and no shell commands for API and local models. Files are opened without following symbolic links at any level, so a path cannot be swapped for a link between the check and the write; the web server applies the same rule to the files it serves.
+- **Backups first.** Every file is saved to `<project>/.livequill/history/` (private, `700`/`600`) before it changes. That folder ignores itself in git.
+- **Undo for CLI agents.** Claude Code and Codex write files themselves, so the project is copied before each request (everything except `.git/` and `node_modules/`, `.env*` included) and compared afterwards, content included. Undo then restores modified, deleted and created files, and replaces any symbolic link an agent left in their place. If the project is larger than 2 GB, the request is refused rather than run without a reliable undo.
 
 Found a vulnerability? Please report it privately: see [SECURITY.md](SECURITY.md).
 
@@ -255,7 +256,8 @@ A 7B model or larger that supports tool calls, such as `qwen2.5:7b-instruct`, `q
 Contributions are welcome: adapters, themes, roadmap items, fixes and translations (the interface is currently in French). Start with [CONTRIBUTING.md](CONTRIBUTING.md). Every pull request runs the full CI (tests on Linux and macOS for Python 3.10 to 3.14, lint, secret scan, CodeQL) and is reviewed by the maintainer before merging.
 
 ```bash
-python3 -m unittest discover -s tests     # about 5 s, no real network calls
+python3 -m unittest discover -s tests     # about 8 s, no network
+node tests/e2e/browser.mjs                # real headless Chrome: edit → reload → undo
 ```
 
 ## License
