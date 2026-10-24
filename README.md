@@ -150,7 +150,7 @@ Yes. Install <a href="https://ollama.com/download">Ollama</a>, run <code>ollama 
 <details>
 <summary><b>What if the model breaks something?</b></summary>
 <br>
-Click <b>Undo</b> in the bar, as many times as you need. To go further back, open <b>Versions</b> (the clock button), preview any earlier version, and click <b>Go back to this version</b>.
+Click <b>Undo</b> in the bar, as many times as you need. To go further back, open <b>History</b> (the clock button), choose the <b>Versions</b> tab, preview any earlier version, and click <b>Go back to this version</b>.
 </details>
 
 <details>

@@ -22,18 +22,28 @@
   .scard{display:flex;flex-direction:column;border-radius:24px;overflow:hidden;background:var(--glass);border:1px solid var(--line);
     backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);box-shadow:var(--shadow);transition:transform .2s}
   .scard:hover{transform:translateY(-3px)}
-  .scard .shot{border-bottom:1px solid var(--line2);cursor:pointer}
+  /* coins arrondis du cadre : clip-path, car overflow:hidden ne rogne pas l'aperçu mis à l'échelle sous Firefox */
+  .scard .shot{border-bottom:1px solid var(--line2);cursor:pointer;border-radius:24px 24px 0 0;clip-path:inset(0 round 23px 23px 0 0);isolation:isolate}
   .ph{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 30%,transparent),color-mix(in srgb,var(--cloudc) 30%,transparent))}
   .ph span{display:grid;place-items:center;width:64px;height:64px;border-radius:20px;background:var(--glass-2);font-size:28px;font-weight:700;color:var(--ink)}
   .ph small{position:absolute;bottom:10px;left:0;right:0;text-align:center;color:var(--soft);font-size:12.5px}
   .sbody{display:flex;flex-direction:column;gap:4px;padding:14px 16px 16px}
-  .kh{display:flex;align-items:center;gap:10px}
+  .kh{display:flex;align-items:center;gap:6px;min-height:34px}
   .kh b{flex:1;font-size:16.5px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kh .rename{flex:1;padding:4px 9px;font-size:16px;font-weight:650;border-radius:10px}
+  .more{flex:none;display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:10px;background:none;color:var(--mute);cursor:pointer}
+  .more:hover,.more[aria-expanded=true]{background:var(--line2);color:var(--ink)}
+  .more svg{width:18px;height:18px}
   .path{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
   .state{font-size:13px;font-weight:600;color:var(--mute)}
   .st-ok .state{color:var(--ok)}.st-busy .state{color:var(--warn)}.st-bad .state{color:var(--bad)}
-  .sacts{display:flex;gap:6px;align-items:center;margin-top:10px}
-  .sacts .sp{flex:1}
+  .srow{display:flex;align-items:center;gap:8px;min-height:28px}
+  .srow .state{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stop{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--line2);border-radius:999px;background:none;color:var(--soft);
+    font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .stop i{width:8px;height:8px;border-radius:2px;background:currentColor}
+  .stop:hover{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+  .scard .open{width:100%;margin-top:10px}
   .newcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:290px;border-radius:24px;border:2px dashed var(--line);
     background:color-mix(in srgb,var(--glass) 55%,transparent);color:var(--soft);cursor:pointer;font:inherit;text-align:center;padding:20px;transition:border-color .2s,background .2s}
   .newcard:hover{border-color:var(--acc);background:var(--glass)}
@@ -79,12 +89,6 @@
   .done .shot{max-width:520px;margin:16px auto;border-radius:16px;border:1px solid var(--line2)}
   .tips{max-width:520px;margin:0 auto;text-align:left;font-size:14px;color:var(--soft)}
   .tips ul{margin:6px 0 0;padding-left:20px}
-  .tabs{display:flex;gap:4px;padding:4px;margin:16px 0 4px;border-radius:14px;background:var(--line2);width:max-content}
-  .tabs button{padding:8px 14px;border:0;border-radius:10px;background:none;color:var(--soft);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
-  .tabs button[aria-selected=true]{background:var(--card-h);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08)}
-  .sect h4{margin:20px 0 10px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
-  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px;color:var(--soft)}
-  .kv code{word-break:break-all}
   @media (max-width:760px){.choices,.details{grid-template-columns:1fr}.details .shot{display:none}}
   @media (prefers-reduced-motion: reduce){.scard,.choice,.newcard{transition:none}}
 </style>
@@ -144,36 +148,9 @@
   </form>
 </div>
 
-<!-- Réglages -->
-<div class="overlay" id="settings">
-  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="st-title">
-    <button type="button" class="x" data-close></button>
-    <h3 id="st-title" data-t>Settings</h3>
-    <div class="tabs" role="tablist">
-      <button type="button" role="tab" aria-selected="true" data-tab="providers" data-t>Models</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="general" data-t>General</button>
-    </div>
-    <div class="sect" data-pane="providers">
-      <h4 data-t>On your computer</h4><div class="pgrid three" data-group="local"></div>
-      <h4 data-t>In the cloud</h4><div class="pgrid three" data-group="cloud"></div>
-      <h4 data-t>Coding agents</h4><div class="pgrid three" data-group="cli"></div>
-    </div>
-    <div class="sect" data-pane="general" hidden>
-      <label for="st-default" data-t>Default model in the bar</label>
-      <select id="st-default"></select>
-      <label for="st-lang" data-t>Language</label>
-      <select id="st-lang"></select>
-      <label data-t>Folder for new sites</label>
-      <div class="where"><span id="st-dir"></span><button type="button" class="b sm" id="st-dir-change" data-t>Change…</button></div>
-      <h4 data-t>About</h4>
-      <div class="kv"><span data-t>Version</span><span id="st-version"></span><span data-t>Settings file</span><code id="st-config"></code></div>
-      <span class="msg" id="st-msg" role="status"></span>
-    </div>
-  </div>
-</div>
-
 <script src="/__lq/ui.js"></script>
 <script src="/__lq/providers.js"></script>
+<script src="/__lq/settings.js"></script>
 <script src="/__lq/sky.js"></script>
 <script>
 (() => {
@@ -203,7 +180,7 @@
     $('#model').hidden = !d;
     if (d) $('#model').innerHTML = `${icon('sparkle').replace('<svg', '<svg width="15" height="15"')} ${esc(t('Default model'))}: <b>${esc(d.model)}</b> · ${esc(info.providers[d.provider] || d.provider)}`;
     const s = JSON.stringify(sites.map(x => [x.id, x.name, x.display, x.running, x.busy, x.exists, x.thumb, x.proxy, x.url]));
-    if (force || s !== sig) { sig = s; render(); }
+    if ((force || s !== sig) && !menu && !renaming) { sig = s; render(); }   // pas de rendu sous un menu ouvert ou un nom en cours d'édition
   }
 
   function card(s) {
@@ -214,16 +191,12 @@
     return `<article class="scard st-${st}" data-id="${esc(s.id)}">
       <div data-open="${esc(s.id)}" title="${esc(t('Open'))}">${shot}</div>
       <div class="sbody">
-        <div class="kh"><b title="${esc(s.name)}">${esc(s.name)}</b><span class="dot" aria-hidden="true"></span></div>
+        <div class="kh"><b title="${esc(s.name)}">${esc(s.name)}</b>
+          <button type="button" class="more" data-menu="${esc(s.id)}" aria-haspopup="menu" aria-expanded="false" title="${esc(t('More actions (or right-click the card)'))}" aria-label="${esc(t('More actions'))}">${icon('more')}</button></div>
         <div class="path" title="${esc(s.root)}"><bdi>${esc(s.display)}</bdi></div>
-        <div class="state">${esc(label)}</div>
-        <div class="sacts">
-          <button type="button" class="b pri sm" data-open="${esc(s.id)}" ${s.exists ? '' : 'disabled'}>${icon('ext')}${esc(t('Open'))}</button>
-          <button type="button" class="b ghost sm" data-edit="${esc(s.id)}" title="${esc(t('Edit'))}">${icon('edit')}${esc(t('Edit'))}</button>
-          <span class="sp"></span>
-          <button type="button" class="b ghost sm" data-reveal="${esc(s.id)}" title="${esc(t('Show the folder'))}" aria-label="${esc(t('Show the folder'))}" ${s.exists ? '' : 'disabled'}>${icon('open')}</button>
-          ${s.running ? `<button type="button" class="b ghost sm" data-stop="${esc(s.id)}" title="${esc(t('Stop'))}" aria-label="${esc(t('Stop'))}">${icon('stop')}</button>` : ''}
-        </div>
+        <div class="srow"><span class="dot" aria-hidden="true"></span><span class="state">${esc(label)}</span>
+          ${s.running ? `<button type="button" class="stop" data-stop="${esc(s.id)}"><i aria-hidden="true"></i>${esc(t('Stop'))}</button>` : ''}</div>
+        <button type="button" class="b pri open" data-open="${esc(s.id)}" ${s.exists ? '' : 'disabled'}>${esc(t('Open'))}</button>
       </div></article>`;
   }
 
@@ -243,13 +216,84 @@
   }
 
   $('#list').addEventListener('click', async e => {
-    const b = e.target.closest('[data-open],[data-edit],[data-stop],[data-reveal],[data-wizard]'); if (!b || b.disabled) return;
+    const b = e.target.closest('[data-open],[data-menu],[data-stop],[data-wizard]'); if (!b || b.disabled || renaming) return;
     if (b.dataset.wizard) return wizard(b.dataset.wizard);
-    if (b.dataset.edit) return editSite(sites.find(s => s.id === b.dataset.edit));
-    if (b.dataset.stop) { await api('sites/stop', { id: b.dataset.stop }).catch(() => {}); return refresh(); }
-    if (b.dataset.reveal) return api('sites/reveal', { id: b.dataset.reveal }).catch(err => alert(t(err.message)));
+    if (b.dataset.menu) { const r = b.getBoundingClientRect(); return showMenu(b.dataset.menu, r.right, r.bottom + 6, b); }
+    if (b.dataset.stop) return act('stop', b.dataset.stop);
     if (b.dataset.open) return openSite(b.dataset.open);
   });
+  // Clic droit (ou touche Menu) sur une carte : toutes les actions du site
+  $('#list').addEventListener('contextmenu', e => {
+    const c = e.target.closest('.scard'); if (!c || e.target.closest('input')) return;
+    e.preventDefault();
+    const r = c.getBoundingClientRect();
+    showMenu(c.dataset.id, e.clientX || r.left + 24, e.clientY || r.top + 24);
+  });
+
+  /* --- Menu contextuel d'un site --- */
+  let menu = null, renaming = false;
+  function closeMenu() {
+    if (!menu) return;
+    if (menu.anchor) menu.anchor.setAttribute('aria-expanded', 'false');
+    menu.el.remove(); menu = null;
+  }
+  function showMenu(id, x, y, anchor) {
+    const s = sites.find(v => v.id === id); if (!s) return;
+    closeMenu();
+    const items = [['open', 'ext', t('Open'), s.exists], ['rename', 'edit', t('Rename'), true], ['reveal', 'open', t('Show the folder'), s.exists],
+      ['edit', 'gear', t('Site settings…'), true]].concat(s.running ? [['stop', 'stop', t('Stop'), true]] : []);
+    const el = document.createElement('div');
+    el.className = 'ctx'; el.setAttribute('role', 'menu');
+    el.innerHTML = items.map(([k, ic, label, ok]) => `<button type="button" role="menuitem" data-act="${k}" ${ok ? '' : 'disabled'}>${icon(ic)}${esc(label)}</button>`).join('')
+      + `<hr><button type="button" role="menuitem" class="danger" data-act="remove">${icon('trash')}${esc(t('Remove from the list'))}</button>`;
+    document.body.appendChild(el);
+    const w = el.offsetWidth, h = el.offsetHeight;
+    el.style.left = Math.max(8, Math.min(anchor ? x - w : x, innerWidth - w - 8)) + 'px';
+    el.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+    if (anchor) anchor.setAttribute('aria-expanded', 'true');
+    menu = { el, id, anchor };
+    el.querySelector('button:not(:disabled)').focus();
+    el.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && !b.disabled) { closeMenu(); act(b.dataset.act, id); } });
+    el.addEventListener('keydown', e => {
+      const bs = [...el.querySelectorAll('button:not(:disabled)')], i = bs.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus(); }
+      if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); const a = menu && menu.anchor; closeMenu(); if (a) a.focus(); }
+    });
+  }
+  document.addEventListener('mousedown', e => { if (menu && !menu.el.contains(e.target) && e.target !== menu.anchor) closeMenu(); });
+  addEventListener('resize', closeMenu); addEventListener('scroll', closeMenu, true);
+
+  async function act(what, id) {
+    const s = sites.find(v => v.id === id); if (!s) return;
+    try {
+      if (what === 'open') return openSite(id);
+      if (what === 'rename') return rename(s);
+      if (what === 'reveal') return await api('sites/reveal', { id });
+      if (what === 'edit') return editSite(s);
+      if (what === 'stop') { await api('sites/stop', { id }); return refresh(true); }
+      if (what === 'remove' && await LQ.confirm({ title: t('Remove “{name}” from the list?', { name: s.name }),
+        text: t('The folder and its files are not deleted. You can add the site again at any time.'), ok: t('Remove'), danger: true })) {
+        await api('sites/delete', { id }); refresh(true);
+      }
+    } catch (err) { alert(t(err.message)); }
+  }
+
+  // Renommer sur place : Entrée ou clic ailleurs enregistre, Échap annule
+  function rename(s) {
+    const b = $(`.scard[data-id="${CSS.escape(s.id)}"] .kh b`); if (!b) return;
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'rename'; input.value = s.name; input.maxLength = 80; input.setAttribute('aria-label', t('Site name'));
+    b.replaceWith(input); renaming = true; input.focus(); input.select();
+    const done = async keep => {
+      if (!renaming) return;
+      renaming = false;
+      const name = input.value.trim();
+      if (keep && name && name !== s.name) await api('sites/save', { id: s.id, root: s.root, name, proxy: s.proxy }).catch(err => alert(t(err.message)));
+      refresh(true);
+    };
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); done(true); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); } });
+    input.addEventListener('blur', () => done(true));
+  }
 
   async function openSite(id) {
     const w = window.open('about:blank', '_blank');     // ouvert tout de suite : pas bloqué comme fenêtre surgissante
@@ -443,7 +487,7 @@
   const E = { el: $('#edit') };
   function editSite(s) {
     E.site = s; E.root = s.root;
-    $('#ed-title').textContent = t('Edit · {name}', { name: s.name });
+    $('#ed-title').textContent = t('Site settings · {name}', { name: s.name });
     $('#ed-name').value = s.name;
     $('#ed-root').textContent = s.display; $('#ed-root').title = s.root;
     $('#ed-proxy-on').checked = !!s.proxy; $('#ed-proxy').value = s.proxy || '';
@@ -462,52 +506,14 @@
       closeModal(E.el); refresh(true);
     } catch (err) { $('#ed-msg').className = 'msg bad'; $('#ed-msg').textContent = '✗ ' + t(err.message); }
   });
-  $('#ed-remove').addEventListener('click', async () => {
-    if (!confirm(t('Remove this site from the list? The folder and its files are not deleted.'))) return;
-    await api('sites/delete', { id: E.site.id });
-    closeModal(E.el); refresh(true);
-  });
+  $('#ed-remove').addEventListener('click', () => { closeModal(E.el); act('remove', E.site.id); });
 
-  /* --- Réglages : modèles (mêmes cartes qu'au premier lancement) et général --- */
-  const S = { el: $('#settings'), mounted: false };
-  async function openSettings(tab = 'providers') {
-    showTab(tab);
-    openModal(S.el, () => { if (location.hash === '#settings') history.replaceState(null, '', location.pathname + location.search); refresh(); });
-    if (!S.mounted) {
-      S.mounted = true;
-      const grids = Object.fromEntries([...S.el.querySelectorAll('.pgrid')].map(g => [g.dataset.group, g]));
-      await LQ.providers.mount({ grids, onSaved: () => { fillGeneral(); refresh(); } });
-    } else LQ.providers.refresh();
-    fillGeneral();
-  }
-  function showTab(tab) {
-    S.el.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
-    S.el.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== tab; });
-  }
-  S.el.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
-  async function fillGeneral() {
-    settings = await api('settings');
-    const k = await api('kinds');
-    const opts = Object.entries(k.providers).flatMap(([pid, p]) => (p.models || []).filter(m => m.shown !== false)
-      .map(m => `<option value="${esc(pid)}::${esc(m.id)}" ${k.default && k.default.provider === pid && k.default.model === m.id ? 'selected' : ''}>${esc(m.label || m.id)} · ${esc(p.label || k.kinds[p.type].label)}</option>`));
-    $('#st-default').innerHTML = opts.join('') || `<option>${esc(t('Add a model first'))}</option>`;
-    $('#st-lang').innerHTML = settings.langs.map(l => `<option value="${esc(l.code)}" ${l.code === settings.lang ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
-    $('#st-dir').textContent = settings.sites_dir_display; $('#st-dir').title = settings.sites_dir;
-    $('#st-version').textContent = settings.version;
-    $('#st-config').textContent = settings.config_path;
-  }
-  const saved = m => { $('#st-msg').className = 'msg ok'; $('#st-msg').textContent = '✓ ' + m; setTimeout(() => { $('#st-msg').textContent = ''; }, 2500); };
-  $('#st-default').addEventListener('change', async e => {
-    const [provider, ...rest] = e.target.value.split('::');
-    await api('default', { provider, model: rest.join('::') });
-    saved(t('Default model saved')); refresh();
-  });
-  $('#st-lang').addEventListener('change', async e => { await api('settings', { lang: e.target.value }); location.reload(); });
-  $('#st-dir-change').addEventListener('click', async () => {
-    const r = await pickFolder({ title: t('Folder for new sites'), lead: t('New sites are created in this folder, each in its own subfolder.'), start: settings.sites_dir, choose: t('Use this folder'), want: 'parent' });
-    if (!r) return;
-    try { await api('settings', { sites_dir: r.path }); await fillGeneral(); saved(t('Folder saved')); } catch (e) { $('#st-msg').className = 'msg bad'; $('#st-msg').textContent = t(e.message); }
-  });
+  /* --- Réglages : panneau commun (settings.js) --- */
+  const openSettings = tab => LQ.settings.open({ tab, onChange: () => refresh(), onClose: () => {
+    if (location.hash === '#settings') history.replaceState(null, '', location.pathname + location.search);
+    api('settings').then(x => { settings = x; }).catch(() => {});
+    refresh();
+  } });
   $('#gear').addEventListener('click', () => openSettings());
   $('#model').addEventListener('click', () => openSettings('general'));
 

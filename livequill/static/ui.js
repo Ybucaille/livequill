@@ -40,6 +40,8 @@
     stop: P('<rect x="6" y="6" width="12" height="12" rx="2"/>'),
     server: P('<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>'),
     open: P('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1"/><path d="M3 7v10a2 2 0 0 0 2 2h12.5a2 2 0 0 0 1.9-1.4L21.5 12H7.5L5 19"/>'),
+    more: P('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>'),
+    trash: P('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
   };
   const icon = k => ICONS[k] || '';
   const logo = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#d97757"/><path d="M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z" fill="#fff"/></svg>';
@@ -146,5 +148,21 @@
     });
   }
 
-  window.LQ = { t, esc, $, api, icon, logo, openModal, closeModal, langMenu, fit, pickFolder, TOKEN, LANG };
+  /* --- Confirmation dans le style des pages (au lieu de la boîte du navigateur) --- */
+  function confirmBox({ title, text, ok, danger } = {}) {
+    const el = document.createElement('div');
+    el.className = 'overlay top';
+    el.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="cf-title" style="width:min(460px,100%)">
+      <h3 id="cf-title" style="margin-right:0">${esc(title || '')}</h3>${text ? `<p class="lead" style="margin-right:0">${esc(text)}</p>` : ''}
+      <div class="row" style="justify-content:flex-end"><button type="button" class="b ghost" data-no>${esc(t('Cancel'))}</button>
+      <button type="button" class="b ${danger ? 'pri danger-pri' : 'pri'}" data-yes autofocus>${esc(ok || t('OK'))}</button></div></div>`;
+    document.body.appendChild(el);
+    return new Promise(resolve => {
+      let answer = false;
+      el.addEventListener('click', e => { if (e.target.closest('[data-yes]')) { answer = true; closeModal(el); } else if (e.target.closest('[data-no]')) closeModal(el); });
+      openModal(el, () => { el.remove(); resolve(answer); });
+    });
+  }
+
+  window.LQ = { t, esc, $, api, icon, logo, openModal, closeModal, langMenu, fit, pickFolder, confirm: confirmBox, TOKEN, LANG };
 })();

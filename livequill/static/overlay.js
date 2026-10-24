@@ -29,7 +29,7 @@
   const I = {
     plus: 'M12 5v14M5 12h14', send: 'M12 19V5M5 12l7-7 7 7', stop: 'M7 7h10v10H7z', chev: 'm6 9 6 6 6-6', check: 'M20 6 9 17l-5-5',
     undo: 'M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11', gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
-    log: 'M4 6h16M4 12h16M4 18h10', palette: 'M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-1.7a1.8 1.8 0 0 0-1.3 3.1A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01', fast: 'M13 2 4 14h7l-1 8 9-12h-7z', trash: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14', x: 'M18 6 6 18M6 6l12 12', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', ext: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'
+    fast: 'M13 2 4 14h7l-1 8 9-12h-7z', trash: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14', x: 'M18 6 6 18M6 6l12 12', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', ext: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'
   };
 
 
@@ -142,7 +142,12 @@
     .panel{display:none;flex-direction:column;margin:-2px -2px 4px -6px;border-bottom:1px solid var(--line);padding-bottom:6px}
     .box.open .panel{display:flex}
     .phead{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mute);padding:0 0 4px 4px}
-    .phead b{flex:1;font-weight:500;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+    .ptabs{flex:1;display:flex;gap:2px}
+    .ptabs button{height:26px;padding:0 9px;font-size:12px;font-weight:500;border-radius:8px;color:var(--mute)}
+    .ptabs button[aria-selected="true"]{color:var(--ink);background:var(--hover)}
+    .sep{height:1px;margin:5px 4px;background:var(--line)}
+    .opt[data-v=settings] svg{visibility:visible;color:var(--soft)}
+    .settings-frame{position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:2147483647;background:transparent;color-scheme:light dark}
     .phead button{height:26px;padding:0 8px;font-size:12px;gap:5px;display:inline-flex;align-items:center}
     .phead button svg{width:14px;height:14px}
     .log{max-height:min(42vh,380px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:2px 6px 2px 4px;font-size:13.5px}
@@ -183,7 +188,7 @@
   <div class="box">
     <span class="status" role="status"></span>
     <div class="panel">
-      <div class="phead"><b class="ptitle">${esc(tr('Conversation'))}</b>
+      <div class="phead"><div class="ptabs" role="tablist"><button type="button" role="tab" data-view="log">${esc(tr('Conversation'))}</button><button type="button" role="tab" data-view="versions">${esc(tr('Versions'))}</button></div>
         <button type="button" class="clear" title="${esc(tr('Forget the history of this project'))}">${icon(I.trash)}${esc(tr('New'))}</button>
         <button type="button" class="close" aria-label="${esc(tr('Collapse'))}">${icon(I.x)}</button></div>
       <div class="log" aria-live="polite"></div>
@@ -194,11 +199,9 @@
     <div class="bar">
       <button class="icon attach" type="button" aria-label="${esc(tr('Add attachments'))}" title="${esc(tr('Attachments (or paste / drop a file)'))}">${icon(I.plus)}</button>
       <input type="file" multiple>
-      <button class="icon panelbtn" type="button" aria-label="${esc(tr('Show the conversation'))}" title="${esc(tr('Conversation and live answer'))}">${icon(I.log)}</button>
       <button class="icon undo" type="button" aria-label="${esc(tr('Undo the last change'))}" title="${esc(tr('Undo the last change'))}" disabled>${icon(I.undo)}</button>
-      <button class="icon versbtn" type="button" aria-label="${esc(tr('Site versions'))}" title="${esc(tr('Site versions: preview and go back to any version'))}">${icon(I.clock)}</button>
-      <button class="icon gear" type="button" aria-label="${esc(tr('Settings'))}" title="${esc(tr('Models and settings'))}">${icon(I.gear)}</button>
-      <div class="dd" data-key="theme"><button class="dd-btn icon" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Bar theme'))}" title="${esc(tr('Bar theme'))}">${icon(I.palette)}</button><div class="menu left" role="listbox" hidden></div></div>
+      <button class="icon histbtn" type="button" aria-label="${esc(tr('History'))}" title="${esc(tr('History: conversation and versions of the site'))}">${icon(I.clock)}</button>
+      <div class="dd" data-key="theme"><button class="dd-btn icon" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Settings'))}" title="${esc(tr('Theme and settings'))}">${icon(I.gear)}</button><div class="menu left" role="listbox" hidden></div></div>
       <span class="grow"></span>
       <div class="dd" data-key="model"><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Model'))}"><span>${esc(tr('Loading…'))}</span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
       <div class="dd" data-key="effort" hidden><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Reasoning'))}"><span></span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
@@ -227,9 +230,9 @@
     ui.panel = open; if (view) ui.view = view;
     const vers = ui.view === 'versions';
     box.classList.toggle('open', open);
-    $('.panelbtn').classList.toggle('on', open && !vers); $('.versbtn').classList.toggle('on', open && vers);
+    $('.histbtn').classList.toggle('on', open);
+    root.querySelectorAll('.ptabs [data-view]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === ui.view)));
     logEl.hidden = vers; versEl.hidden = !vers; $('.clear').hidden = vers;
-    $('.ptitle').textContent = vers ? tr('Site versions') : tr('Conversation');
     save(sessionStorage, UI_KEY, ui);
     if (open && vers) loadVersions();
     else if (open) logEl.scrollTop = logEl.scrollHeight;
@@ -324,7 +327,8 @@
     host.dataset.mode = prefs.mode === 'auto' ? (darkMq && !darkMq.matches ? 'light' : 'dark') : prefs.mode;
     ddTheme.querySelector('.menu').innerHTML = `<h6>${esc(tr('Theme'))}</h6>` + Object.entries(THEMES).map(([id, t]) =>
       `<button class="opt" type="button" role="option" data-v="skin:${id}" aria-selected="${id === prefs.skin}"><span><i class="sw" style="background:${t.swatch}"></i>${esc(t.label)}</span>${icon(I.check)}</button>`).join('') +
-      `<h6>${esc(tr('Appearance'))}</h6>` + MODES.map(([v, l]) => optHtml('mode:' + v, tr(l), v === prefs.mode)).join('');
+      `<h6>${esc(tr('Appearance'))}</h6>` + MODES.map(([v, l]) => optHtml('mode:' + v, tr(l), v === prefs.mode)).join('') +
+      `<div class="sep"></div><button class="opt" type="button" role="option" data-v="settings"><span>${icon(I.gear)}${esc(tr('Models and settings…'))}</span></button>`;
   };
   if (darkMq) darkMq.addEventListener('change', () => { if (prefs.mode === 'auto') applyTheme(); });
   const closeMenus = except => dds.forEach(dd => { if (dd !== except) { dd.querySelector('.menu').hidden = true; dd.querySelector('.dd-btn').setAttribute('aria-expanded', 'false'); } });
@@ -339,6 +343,7 @@
     menu.addEventListener('click', e => {
       const o = e.target.closest('.opt'); if (!o) return;
       if (dd === ddTheme) {
+        if (o.dataset.v === 'settings') { closeMenus(); return openSettings(); }
         const [k, v] = o.dataset.v.split(':');
         prefs[k] = v; save(localStorage, PREFS_KEY, prefs); applyTheme();
         dd.querySelector(`.opt[data-v="${o.dataset.v}"]`).focus();   // le menu reste ouvert pour comparer les thèmes
@@ -454,9 +459,28 @@
     try { const r = await api('undo', {}); setStatus(r.ok ? tr('Undone: {files}, reloading…', { files: r.files.join(', ') }) : tr(r.message), !r.ok); if (state) state.undo = r.undo || 0; refresh(); }
     catch (e) { setStatus(tr('Could not undo: {error}', { error: tr(e.message) }), true); }
   });
-  $('.gear').addEventListener('click', () => { location.href = '/__setup?next=' + encodeURIComponent(location.pathname + location.search + location.hash); });
-  $('.panelbtn').addEventListener('click', () => setPanel(!(ui.panel && ui.view === 'log'), 'log'));
-  $('.versbtn').addEventListener('click', () => setPanel(!(ui.panel && ui.view === 'versions'), 'versions'));
+  $('.histbtn').addEventListener('click', () => setPanel(!ui.panel));
+  $('.ptabs').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setPanel(true, b.dataset.view); });
+
+  /* --- Réglages : fenêtre flottante par-dessus le site (page /__lq/settings de la même origine, dans un cadre) --- */
+  let frame = null;
+  function openSettings(tab) {
+    if (frame) return;
+    frame = document.createElement('iframe');
+    frame.className = 'settings-frame';
+    frame.title = tr('Settings');
+    frame.src = '/__lq/settings' + (tab ? '?tab=' + encodeURIComponent(tab) : '');
+    frame.addEventListener('load', () => { if (frame) frame.focus(); });
+    root.appendChild(frame);
+  }
+  window.addEventListener('message', async e => {
+    if (!frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
+    const m = e.data && e.data.livequill;
+    if (m === 'lang') return location.reload();
+    if (m === 'changed' || m === 'closed') { try { state = await api('state'); pickDefault(); paint(); } catch (_) {} }
+    if (m === 'closed') { frame.remove(); frame = null; ta.focus(); }
+  });
+  if (!(ui.view === 'log' || ui.view === 'versions')) ui.view = 'log';
   $('.close').addEventListener('click', () => setPanel(false));
   $('.clear').addEventListener('click', async () => {
     if (running()) return;

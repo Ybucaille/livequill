@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="lq-token" content="__LQ_TOKEN__">
+<title>LiveQuill · Settings</title>
+<link rel="stylesheet" href="/__lq/theme.css">
+<!-- Ouverte par la barre dans un cadre plein écran par-dessus le site : seul le voile et la fenêtre flottante sont visibles -->
+<style>html,body{background:transparent!important;min-height:0}:root{color-scheme:light dark!important}</style>
+<!-- même color-scheme que le cadre, sinon le navigateur peint un fond opaque derrière la page -->
+</head>
+<body>
+<script src="/__lq/ui.js"></script>
+<script src="/__lq/providers.js"></script>
+<script src="/__lq/settings.js"></script>
+<script>
+(() => {
+  const tell = msg => parent.postMessage({ livequill: msg }, location.origin);
+  LQ.settings.open({
+    tab: new URLSearchParams(location.search).get('tab') || 'providers',
+    onChange: () => tell('changed'),
+    onLang: () => tell('lang'),
+    onClose: () => tell('closed'),
+  });
+})();
+</script>
+</body>
+</html>

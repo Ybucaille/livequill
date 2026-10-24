@@ -137,8 +137,8 @@ const beforeSecond = loaded;
 for (const type of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
 await until('le rechargement après la 2e modification', async () => loaded > beforeSecond);
 await until('le titre modifié à nouveau', async () => (await h1()) === 'Salut');
-await until('la barre prête', () => js(`!!${bar('.versbtn')}`));
-await js(`${bar('.versbtn')}.click()`);
+await until('la barre prête', () => js(`!!${bar('.histbtn')}`));
+await js(`${bar('[data-view=versions]')}.click()`);
 const versBtn = id => `[...document.getElementById('livequill').shadowRoot.querySelectorAll('.ver')].find(b => b.dataset.id === ${JSON.stringify(id)})`;
 await until('la liste des versions', () => js(`!!${versBtn('origin')}`));
 await js(`${versBtn('origin')}.click()`);
@@ -153,6 +153,18 @@ await until('le rechargement après le retour de version', async () => loaded > 
 await until('le titre de la version d’origine', async () => (await h1()) === 'Hello');
 if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le retour de version n’a pas rétabli le fichier à l’identique');
 console.log('✓ retour à la version d’origine');
+
+// 3 bis. Réglages depuis la barre : fenêtre flottante par-dessus le site, sans quitter la page
+const pageBefore = await js('location.href');
+await js(`${bar('.dd[data-key=theme] .dd-btn')}.click()`);
+await until('le menu réglages de la barre', () => js(`!!${bar('.opt[data-v=settings]')}`));
+await js(`${bar('.opt[data-v=settings]')}.click()`);
+await until('les réglages par-dessus le site', () =>
+  js(`(() => { const f = ${bar('.settings-frame')}; return !!(f && f.contentDocument && f.contentDocument.querySelector('.pcard')); })()`));
+if (await js('location.href') !== pageBefore) fail('les réglages ne doivent pas quitter le site');
+await js(`${bar('.settings-frame')}.contentDocument.querySelector('[data-st-close]').click()`);
+await until('la fermeture des réglages', () => js(`!${bar('.settings-frame')}`));
+console.log('✓ réglages ouverts par-dessus le site');
 
 // 4. Tableau de bord : l'assistant « New site » crée un site à partir du modèle d'entreprise
 await cdp('Page.navigate', { url: hubUrl });

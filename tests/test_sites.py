@@ -137,6 +137,19 @@ class HubSites(unittest.TestCase):
         self.assertEqual(h['Location'], self.hub.sites.url + f'?back=http%3A%2F%2F127.0.0.1%3A{port}%2Fabout.html#settings')
         cleanup(root)
 
+    def test_settings_page_opens_over_the_site(self):
+        root = temp_project({'index.html': '<h1>x</h1>'})
+        sid = self.api('sites/save', {'root': root})[1]['site']['id']
+        port = self.hub.sites.start(sid)
+        site_app = self.hub.sites.running[sid][0]
+        s, h, body = self.req('GET', '/__lq/settings', token=False, port=port)
+        self.assertEqual(s, 200)
+        self.assertEqual(h['Content-Security-Policy'], "frame-ancestors 'self'")      # seul le site lui-même peut l'encadrer
+        self.assertIn(site_app.token.encode(), body)
+        self.assertIn(b'/__lq/settings.js', body)
+        self.assertEqual(self.req('GET', '/__lq/settings.js', token=False, port=port)[0], 200)
+        cleanup(root)
+
     def test_folder_without_home_page_shows_the_bar(self):
         root = temp_project({'about.html': '<h1>About</h1>'})
         sid = self.api('sites/save', {'root': root})[1]['site']['id']

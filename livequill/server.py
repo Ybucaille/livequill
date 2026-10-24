@@ -52,6 +52,7 @@ def localized(name, lang, token=None):
 
 ASSETS = {'/__lq/overlay.js': ('overlay.js', 'text/javascript'), '/__lq/ui.js': ('ui.js', 'text/javascript'),
           '/__lq/sky.js': ('sky.js', 'text/javascript'), '/__lq/providers.js': ('providers.js', 'text/javascript'),
+          '/__lq/settings.js': ('settings.js', 'text/javascript'),
           '/__lq/theme.css': ('theme.css', 'text/css')}
 PAGE_HEADERS = {'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'", 'Referrer-Policy': 'no-referrer'}
 
@@ -714,6 +715,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
             return self.send_bytes(localized('setup.html', app.lang, app.token), 'text/html; charset=utf-8', extra=PAGE_HEADERS)
+        if p == '/__lq/settings' and method == 'GET':
+            # Réglages ouverts par la barre dans un cadre par-dessus le site : seule la page elle-même peut l'encadrer
+            return self.send_bytes(localized('settings.html', app.lang, app.token), 'text/html; charset=utf-8',
+                                   extra={'X-Frame-Options': 'SAMEORIGIN', 'Content-Security-Policy': "frame-ancestors 'self'",
+                                          'Referrer-Policy': 'no-referrer'})
         if app.project is None and method == 'GET':
             m = re.fullmatch(r'/__lq/(template|thumb)/([\w-]+)(/.*)?', p)
             if m:

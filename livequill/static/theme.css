@@ -99,6 +99,7 @@ header.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .b.ghost{background:none;border-color:transparent}
 .b.ghost:hover{background:var(--line2)}
 .b.danger{color:var(--bad);background:none}
+.b.pri.danger-pri{background:var(--bad);border-color:var(--bad);box-shadow:0 8px 20px color-mix(in srgb,var(--bad) 30%,transparent)}
 .b.sm{padding:7px 12px;font-size:13px;border-radius:10px}
 .b:disabled{opacity:.45;cursor:default;box-shadow:none;filter:none}
 label{display:block;margin:14px 0 5px;font-size:13px;font-weight:600;color:var(--soft)}
@@ -131,6 +132,25 @@ summary{cursor:pointer;color:var(--mute);font-weight:600}
 .modal h3{margin:0 40px 6px 0;font-size:21px;letter-spacing:-.01em}
 .modal .lead{margin:0 40px 6px 0;color:var(--soft);font-size:14.5px}
 .x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:0;background:var(--line2);color:var(--ink);font-size:18px;cursor:pointer;z-index:2}
+
+/* --- Onglets et sections des réglages --- */
+.tabs{display:flex;gap:4px;padding:4px;margin:16px 0 4px;border-radius:14px;background:var(--line2);width:max-content}
+.tabs button{padding:8px 14px;border:0;border-radius:10px;background:none;color:var(--soft);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--card-h);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.sect h4{margin:20px 0 10px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px;color:var(--soft)}
+.kv code{word-break:break-all}
+.where{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:var(--line2)}
+.where span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* --- Menu contextuel (clic droit) --- */
+.ctx{position:fixed;z-index:35;min-width:210px;padding:6px;border-radius:16px;background:var(--glass-2);border:1px solid var(--line);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:var(--shadow);animation:pop .14s ease-out}
+.ctx button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:0;border-radius:11px;background:none;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.ctx button:hover,.ctx button:focus-visible{background:var(--line2);outline:0}
+.ctx button svg{width:16px;height:16px;flex:none;color:var(--mute)}
+.ctx button.danger,.ctx button.danger svg{color:var(--bad)}
+.ctx hr{border:0;border-top:1px solid var(--line2);margin:5px 4px}
 
 /* --- Menu de langue --- */
 .lang{position:relative}

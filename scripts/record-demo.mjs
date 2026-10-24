@@ -169,10 +169,10 @@ if (!SHOTS_ONLY) {
   await snap('hero.jpg');
 
   // 4. Versions: live preview of the site before the change, nothing restored
-  await click('bar:.versbtn');
+  await click('bar:[data-view=versions]');
   await click('bar:.ver[data-id=origin]');
   await sleep(2600);
-  await click('bar:.versbtn');
+  await click('bar:.histbtn');
   await sleep(600);
 
   // 5. Undo
