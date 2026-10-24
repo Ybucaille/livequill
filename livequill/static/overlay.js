@@ -4,6 +4,9 @@
   if (window.__livequill) return;
   window.__livequill = true;
   const TOKEN = document.currentScript && document.currentScript.dataset.lqToken;
+  // Textes en anglais ; le serveur fournit la traduction de la langue choisie (clé = texte anglais)
+  const DICT = /*__LQ_DICT__*/{}, LANG = '__LQ_LANG__';
+  const tr = (s, v) => (DICT[s] || s).replace(/\{(\w+)\}/g, (_, k) => (v && k in v ? v[k] : `{${k}}`));
   const MAX_FILE = 15 * 1024 * 1024;
   const PREFS_KEY = 'livequill-prefs', UI_KEY = 'livequill-ui';
   const load = (s, k, d) => { try { return JSON.parse(s.getItem(k)) || d; } catch (_) { return d; } };
@@ -66,7 +69,7 @@
         acc: '#111111', 'acc-bg': '#111111', 'acc-ink': '#fff', acc2: '#111111', 'acc-soft': '#ededed', off: '#e2e2e2', bad: '#dc2626', thumb: '#d0d0d0', drag: '#f7f7f7',
         shadow: '0 4px 18px rgba(0,0,0,.10)' } },
   };
-  const MODES = [['auto', 'Auto (système)'], ['light', 'Clair'], ['dark', 'Sombre']];
+  const MODES = [['auto', 'Auto (system)'], ['light', 'Light'], ['dark', 'Dark']];
   const vars = o => Object.entries(o).map(([k, v]) => `--${k}:${v}`).join(';');
   const themeCss = () => Object.entries(THEMES).map(([id, t]) =>
     `:host([data-skin="${id}"]){${vars(t.shape)}}` +
@@ -143,7 +146,7 @@
     .phead button{height:26px;padding:0 8px;font-size:12px;gap:5px;display:inline-flex;align-items:center}
     .phead button svg{width:14px;height:14px}
     .log{max-height:min(42vh,380px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:2px 6px 2px 4px;font-size:13.5px}
-    .log:empty::before{content:"Aucune demande pour l’instant. Les réponses du modèle et les fichiers modifiés s’affichent ici.";color:var(--mute);font-size:13px}
+    .log:empty::before{content:${JSON.stringify(tr('No requests yet. The model’s answers and the files it changes show up here.'))};color:var(--mute);font-size:13px}
     .turn{display:flex;flex-direction:column;gap:5px}
     .you{align-self:flex-end;max-width:85%;padding:6px 10px;border-radius:var(--bubble-radius);background:var(--bubble);white-space:pre-wrap;word-break:break-word}
     .you small{display:block;color:var(--mute);font-size:11px;margin-top:2px}
@@ -180,27 +183,27 @@
   <div class="box">
     <span class="status" role="status"></span>
     <div class="panel">
-      <div class="phead"><b class="ptitle">Conversation</b>
-        <button type="button" class="clear" title="Oublier l’historique de ce projet">${icon(I.trash)}Nouvelle</button>
-        <button type="button" class="close" aria-label="Replier">${icon(I.x)}</button></div>
+      <div class="phead"><b class="ptitle">${esc(tr('Conversation'))}</b>
+        <button type="button" class="clear" title="${esc(tr('Forget the history of this project'))}">${icon(I.trash)}${esc(tr('New'))}</button>
+        <button type="button" class="close" aria-label="${esc(tr('Collapse'))}">${icon(I.x)}</button></div>
       <div class="log" aria-live="polite"></div>
       <div class="vers" hidden></div>
     </div>
     <div class="files"></div>
-    <textarea rows="1" placeholder="Demande une modif…" aria-label="Demande de modification"></textarea>
+    <textarea rows="1" placeholder="${esc(tr('Ask for a change…'))}" aria-label="${esc(tr('Change request'))}"></textarea>
     <div class="bar">
-      <button class="icon attach" type="button" aria-label="Ajouter des pièces jointes" title="Pièces jointes (ou colle / glisse un fichier)">${icon(I.plus)}</button>
+      <button class="icon attach" type="button" aria-label="${esc(tr('Add attachments'))}" title="${esc(tr('Attachments (or paste / drop a file)'))}">${icon(I.plus)}</button>
       <input type="file" multiple>
-      <button class="icon panelbtn" type="button" aria-label="Afficher la conversation" title="Conversation et réponse en direct">${icon(I.log)}</button>
-      <button class="icon undo" type="button" aria-label="Annuler la dernière modif" title="Annuler la dernière modif" disabled>${icon(I.undo)}</button>
-      <button class="icon versbtn" type="button" aria-label="Versions du site" title="Versions du site : aperçu et retour à n’importe quelle version">${icon(I.clock)}</button>
-      <button class="icon gear" type="button" aria-label="Réglages des fournisseurs" title="Fournisseurs et modèles">${icon(I.gear)}</button>
-      <div class="dd" data-key="theme"><button class="dd-btn icon" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Thème de la barre" title="Thème de la barre">${icon(I.palette)}</button><div class="menu left" role="listbox" hidden></div></div>
+      <button class="icon panelbtn" type="button" aria-label="${esc(tr('Show the conversation'))}" title="${esc(tr('Conversation and live answer'))}">${icon(I.log)}</button>
+      <button class="icon undo" type="button" aria-label="${esc(tr('Undo the last change'))}" title="${esc(tr('Undo the last change'))}" disabled>${icon(I.undo)}</button>
+      <button class="icon versbtn" type="button" aria-label="${esc(tr('Site versions'))}" title="${esc(tr('Site versions: preview and go back to any version'))}">${icon(I.clock)}</button>
+      <button class="icon gear" type="button" aria-label="${esc(tr('Settings'))}" title="${esc(tr('Models and settings'))}">${icon(I.gear)}</button>
+      <div class="dd" data-key="theme"><button class="dd-btn icon" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Bar theme'))}" title="${esc(tr('Bar theme'))}">${icon(I.palette)}</button><div class="menu left" role="listbox" hidden></div></div>
       <span class="grow"></span>
-      <div class="dd" data-key="model"><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Modèle"><span>Chargement…</span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
-      <div class="dd" data-key="effort" hidden><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Réflexion"><span></span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
-      <button class="fast" type="button" aria-pressed="false" title="Mode fast (si le modèle le gère)" hidden>${icon(I.fast)}Fast</button>
-      <button class="send" type="button" aria-label="Envoyer" disabled>${icon(I.send)}</button>
+      <div class="dd" data-key="model"><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Model'))}"><span>${esc(tr('Loading…'))}</span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
+      <div class="dd" data-key="effort" hidden><button class="dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(tr('Reasoning'))}"><span></span>${icon(I.chev)}</button><div class="menu" role="listbox" hidden></div></div>
+      <button class="fast" type="button" aria-pressed="false" title="${esc(tr('Fast mode (when the model supports it)'))}" hidden>${icon(I.fast)}Fast</button>
+      <button class="send" type="button" aria-label="${esc(tr('Send'))}" disabled>${icon(I.send)}</button>
     </div>
   </div>`;
 
@@ -216,7 +219,7 @@
     send.disabled = !running() && ((!ta.value.trim() && !files.length) || !current());
     send.classList.toggle('stop', running());
     send.innerHTML = icon(running() ? I.stop : I.send);
-    send.setAttribute('aria-label', running() ? 'Arrêter' : 'Envoyer');
+    send.setAttribute('aria-label', running() ? tr('Stop') : tr('Send'));
     undoBtn.disabled = running() || !(state && state.undo);
   };
   const grow = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; refresh(); };
@@ -226,7 +229,7 @@
     box.classList.toggle('open', open);
     $('.panelbtn').classList.toggle('on', open && !vers); $('.versbtn').classList.toggle('on', open && vers);
     logEl.hidden = vers; versEl.hidden = !vers; $('.clear').hidden = vers;
-    $('.ptitle').textContent = vers ? 'Versions du site' : 'Conversation';
+    $('.ptitle').textContent = vers ? tr('Site versions') : tr('Conversation');
     save(sessionStorage, UI_KEY, ui);
     if (open && vers) loadVersions();
     else if (open) logEl.scrollTop = logEl.scrollHeight;
@@ -234,32 +237,32 @@
 
   /* --- versions : un instantané après chaque modification, aperçu vivant, retour à n'importe quelle version --- */
   let versions = null, selV = null;
-  const when = t => new Date(t * 1000).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const when = t => new Date(t * 1000).toLocaleString(LANG, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   async function loadVersions() {
     try { versions = await api('versions'); renderVersions(); }
     catch (e) { versEl.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
   function renderVersions() {
     const vs = versions.versions;
-    if (!vs.length) { versEl.innerHTML = '<div class="empty">Pas encore de version. Chaque modification faite par le modèle en crée une, que tu pourras prévisualiser et restaurer.</div>'; return; }
+    if (!vs.length) { versEl.innerHTML = `<div class="empty">${esc(tr('No versions yet. Every change made by the model creates one, which you can preview and restore.'))}</div>`; return; }
     const items = vs.map((v, i) => ({ ...v, newer: i, now: i === 0 }))
-      .concat([{ id: 'origin', prompt: 'Avant toute modification', files: [], newer: vs.length, origin: true }]);
+      .concat([{ id: 'origin', prompt: tr('Before any change'), files: [], newer: vs.length, origin: true }]);
     const page = location.pathname.replace(/^\//, '');
     versEl.innerHTML = items.map(v => {
-      const meta = v.origin ? 'état de départ du site' : [when(v.time), v.model, `${v.files.length} fichier(s)`].filter(Boolean).join(' · ');
+      const meta = v.origin ? tr('the site as it was at the start') : [when(v.time), v.model, tr('{n} file(s)', { n: v.files.length })].filter(Boolean).join(' · ');
       let detail = '';
       if (v.id === selV) {
         const chips = v.files.length ? `<div class="chips">${v.files.map(f => `<span class="chip">✎ ${esc(f)}</span>`).join('')}</div>` : '';
         const url = `/__lq/preview/${encodeURIComponent(v.id)}/${page}`;
-        const pv = v.now ? '<div class="note">C’est la version affichée en ce moment.</div>'
-          : versions.mode === 'proxy' ? '<div class="note">Aperçu indisponible derrière un serveur de dev : le résumé ci-dessus décrit la version.</div>'
-          : `<div class="pv"><iframe src="${url}" tabindex="-1" title="Aperçu de la version"></iframe></div>`;
-        const acts = v.now ? '' : `<div class="vacts">${versions.mode === 'proxy' ? '' : `<button type="button" data-open="${esc(url)}">${icon(I.ext)}Ouvrir l’aperçu</button>`}
-          <button type="button" class="pri" data-restore="${esc(v.id)}" data-newer="${v.newer}">${icon(I.undo)}Revenir à cette version</button></div>`;
+        const pv = v.now ? `<div class="note">${esc(tr('This is the version shown right now.'))}</div>`
+          : versions.mode === 'proxy' ? `<div class="note">${esc(tr('No preview behind a dev server: the summary above describes the version.'))}</div>`
+          : `<div class="pv"><iframe src="${url}" tabindex="-1" title="${esc(tr('Version preview'))}"></iframe></div>`;
+        const acts = v.now ? '' : `<div class="vacts">${versions.mode === 'proxy' ? '' : `<button type="button" data-open="${esc(url)}">${icon(I.ext)}${esc(tr('Open the preview'))}</button>`}
+          <button type="button" class="pri" data-restore="${esc(v.id)}" data-newer="${v.newer}">${icon(I.undo)}${esc(tr('Go back to this version'))}</button></div>`;
         detail = `<div class="vd">${chips}${pv}${acts}</div>`;
       }
-      return `<button type="button" class="ver ${v.id === selV ? 'sel' : ''}" data-id="${esc(v.id)}"><span class="vt">${v.origin ? '' : '« '}${esc(v.prompt || '(pièces jointes)')}${v.origin ? '' : ' »'}</span>
-        <span class="vm">${v.now ? '<b>actuelle</b> · ' : ''}${esc(meta)}</span></button>${detail}`;
+      return `<button type="button" class="ver ${v.id === selV ? 'sel' : ''}" data-id="${esc(v.id)}"><span class="vt">${v.origin ? '' : '“'}${esc(v.prompt || tr('(attachments)'))}${v.origin ? '' : '”'}</span>
+        <span class="vm">${v.now ? `<b>${esc(tr('current'))}</b> · ` : ''}${esc(meta)}</span></button>${detail}`;
     }).join('');
     const pv = versEl.querySelector('.pv');
     if (pv) { const f = pv.querySelector('iframe'), fit = () => { f.style.transform = `scale(${pv.clientWidth / 1280})`; }; fit(); new ResizeObserver(fit).observe(pv); }
@@ -275,9 +278,9 @@
     if (open) return window.open(open.dataset.open, '_blank', 'noopener');
     if (restore) {
       const n = +restore.dataset.newer;
-      if (!confirm(`Revenir à cette version ? ${n} modification(s) plus récente(s) seront annulée(s).`)) return;
-      try { const r = await api('versions/restore', { id: restore.dataset.restore }); setStatus(r.ok ? 'Version restaurée — rechargement…' : r.message, !r.ok); selV = null; if (state) state.undo = r.undo || 0; refresh(); }
-      catch (err) { setStatus('Restauration impossible : ' + err.message, true); }
+      if (!confirm(tr('Go back to this version? {n} newer change(s) will be undone.', { n }))) return;
+      try { const r = await api('versions/restore', { id: restore.dataset.restore }); setStatus(r.ok ? tr('Version restored, reloading…') : tr(r.message), !r.ok); selV = null; if (state) state.undo = r.undo || 0; refresh(); }
+      catch (err) { setStatus(tr('Could not restore: {error}', { error: tr(err.message) }), true); }
       return;
     }
     if (item) { selV = selV === item.dataset.id ? null : item.dataset.id; renderVersions(); }
@@ -295,33 +298,33 @@
   const optHtml = (v, l, sel, sub) => `<button class="opt" type="button" role="option" data-v="${esc(v)}" aria-selected="${sel}" title="${esc(l)}"><span>${esc(l)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>${icon(I.check)}</button>`;
   const paint = () => {
     const m = current();
-    ddModel.querySelector('.dd-btn span').textContent = m ? m.label : (state ? 'Aucun modèle' : 'Chargement…');
+    ddModel.querySelector('.dd-btn span').textContent = m ? m.label : (state ? tr('No model') : tr('Loading…'));
     const groups = state ? state.providers.filter(p => p.models.length) : [];
     ddModel.querySelector('.menu').innerHTML = groups.length
       ? groups.map(p => `<h6>${esc(p.label)}</h6>` + p.models.map(x => optHtml(p.id + '::' + x.id, x.label, p.id + '::' + x.id === prefs.model,
-          [x.caps.vision ? 'vision' : '', x.caps.tools ? '' : 'mode texte'].filter(Boolean).join(' · '))).join('')).join('')
-      : '<div class="empty">Aucun fournisseur : ouvre les réglages.</div>';
+          [x.caps.vision ? tr('vision') : '', x.caps.tools ? '' : tr('text mode')].filter(Boolean).join(' · '))).join('')).join('')
+      : `<div class="empty">${esc(tr('No provider yet: open the settings.'))}</div>`;
     const eff = m && m.caps.effort;
     ddEffort.hidden = !eff;
     if (eff) {
       let e = prefs.effort[m.key];
       if (!eff.some(([v]) => v === e)) e = (eff.find(([v]) => v === 'medium') || eff[Math.floor((eff.length - 1) / 2)])[0];
       prefs.effort[m.key] = e;
-      ddEffort.querySelector('.dd-btn span').textContent = 'Réflexion : ' + eff.find(([v]) => v === e)[1];
-      ddEffort.querySelector('.menu').innerHTML = '<h6>Réflexion</h6>' + eff.map(([v, l]) => optHtml(v, l, v === e)).join('');
+      ddEffort.querySelector('.dd-btn span').textContent = tr('Reasoning: {level}', { level: tr(eff.find(([v]) => v === e)[1]) });
+      ddEffort.querySelector('.menu').innerHTML = `<h6>${esc(tr('Reasoning'))}</h6>` + eff.map(([v, l]) => optHtml(v, tr(l), v === e)).join('');
     }
     fast.hidden = !(m && m.caps.fast);
     fast.setAttribute('aria-pressed', String(!!(m && m.caps.fast && prefs.fast)));
-    ta.placeholder = m ? `Demande une modif à ${m.label}…` : 'Configure un fournisseur dans les réglages ⚙';
+    ta.placeholder = m ? tr('Ask {model} for a change…', { model: m.label }) : tr('Set up a provider in the settings ⚙');
     refresh();
   };
   const applyTheme = () => {
     if (!THEMES[prefs.skin]) prefs.skin = 'claude';
     host.dataset.skin = prefs.skin;
     host.dataset.mode = prefs.mode === 'auto' ? (darkMq && !darkMq.matches ? 'light' : 'dark') : prefs.mode;
-    ddTheme.querySelector('.menu').innerHTML = '<h6>Thème</h6>' + Object.entries(THEMES).map(([id, t]) =>
+    ddTheme.querySelector('.menu').innerHTML = `<h6>${esc(tr('Theme'))}</h6>` + Object.entries(THEMES).map(([id, t]) =>
       `<button class="opt" type="button" role="option" data-v="skin:${id}" aria-selected="${id === prefs.skin}"><span><i class="sw" style="background:${t.swatch}"></i>${esc(t.label)}</span>${icon(I.check)}</button>`).join('') +
-      '<h6>Apparence</h6>' + MODES.map(([v, l]) => optHtml('mode:' + v, l, v === prefs.mode)).join('');
+      `<h6>${esc(tr('Appearance'))}</h6>` + MODES.map(([v, l]) => optHtml('mode:' + v, tr(l), v === prefs.mode)).join('');
   };
   if (darkMq) darkMq.addEventListener('change', () => { if (prefs.mode === 'auto') applyTheme(); });
   const closeMenus = except => dds.forEach(dd => { if (dd !== except) { dd.querySelector('.menu').hidden = true; dd.querySelector('.dd-btn').setAttribute('aria-expanded', 'false'); } });
@@ -355,14 +358,14 @@
 
   /* --- pièces jointes : bouton +, coller, glisser-déposer --- */
   const renderFiles = () => {
-    list.innerHTML = files.map((f, i) => `<span class="file">${f.type.startsWith('image/') ? `<img src="${f.data}" alt="">` : ''}<span title="${esc(f.name)}">${esc(f.name)}</span><button type="button" data-i="${i}" aria-label="Retirer ${esc(f.name)}">×</button></span>`).join('');
+    list.innerHTML = files.map((f, i) => `<span class="file">${f.type.startsWith('image/') ? `<img src="${f.data}" alt="">` : ''}<span title="${esc(f.name)}">${esc(f.name)}</span><button type="button" data-i="${i}" aria-label="${esc(tr('Remove {name}', { name: f.name }))}">×</button></span>`).join('');
     refresh();
   };
   const addFiles = fl => {
     for (const f of fl) {
-      if (f.size > MAX_FILE) { setStatus(`${f.name} dépasse 15 Mo`, true); continue; }
+      if (f.size > MAX_FILE) { setStatus(tr('{name} is larger than 15 MB', { name: f.name }), true); continue; }
       const r = new FileReader();
-      r.onload = () => { files.push({ name: f.name || 'collage.png', type: f.type || 'application/octet-stream', size: f.size, data: r.result }); renderFiles(); };
+      r.onload = () => { files.push({ name: f.name || 'pasted.png', type: f.type || 'application/octet-stream', size: f.size, data: r.result }); renderFiles(); };
       r.readAsDataURL(f);
     }
   };
@@ -377,8 +380,8 @@
   /* --- conversation et réponse en direct --- */
   const turnHtml = t => {
     const err = t.status === 'error';
-    const meta = [t.model, t.status === 'undone' ? 'annulée' : t.status === 'cancelled' ? 'arrêtée' : ''].filter(Boolean).join(' · ');
-    return `<div class="turn ${t.status === 'undone' ? 'undone' : ''}"><div class="you">${esc(t.prompt || '(pièces jointes)')}${t.attachments && t.attachments.length ? `<small>📎 ${esc(t.attachments.join(', '))}</small>` : ''}</div>
+    const meta = [t.model, t.status === 'undone' ? tr('undone') : t.status === 'cancelled' ? tr('stopped') : ''].filter(Boolean).join(' · ');
+    return `<div class="turn ${t.status === 'undone' ? 'undone' : ''}"><div class="you">${esc(t.prompt || tr('(attachments)'))}${t.attachments && t.attachments.length ? `<small>📎 ${esc(t.attachments.join(', '))}</small>` : ''}</div>
       <div class="ans ${err ? 'err' : ''}">${esc(t.answer || '')}</div>
       ${t.files && t.files.length ? `<div class="chips">${t.files.map(f => `<span class="chip">✎ ${esc(f)}</span>`).join('')}</div>` : ''}
       <div class="meta">${esc(meta)}</div></div>`;
@@ -393,7 +396,7 @@
   function follow(id, prompt) {
     const el = document.createElement('div');
     el.className = 'turn';
-    el.innerHTML = `<div class="you">${esc(prompt || '…')}</div><div class="think" hidden></div><div class="steps"></div><div class="ans"></div><div class="chips"></div><div class="meta dots">En cours</div>`;
+    el.innerHTML = `<div class="you">${esc(prompt || '…')}</div><div class="think" hidden></div><div class="steps"></div><div class="ans"></div><div class="chips"></div><div class="meta dots">${esc(tr('Working'))}</div>`;
     job = { id, el, done: false, files: new Set(), answer: '' };
     const q = s => el.querySelector(s);
     renderLog(); refresh();
@@ -402,7 +405,7 @@
     es = new EventSource(`/__lq/api/jobs/${id}/events?t=${encodeURIComponent(TOKEN)}&from=0`);
     es.onmessage = m => {
       const ev = JSON.parse(m.data);
-      if (ev.type === 'start') { if (!prompt && ev.prompt) q('.you').textContent = ev.prompt; q('.meta').textContent = `${ev.label} · ${ev.model}`; q('.meta').classList.add('dots'); setStatus(`${ev.model} travaille…`); }
+      if (ev.type === 'start') { if (!prompt && ev.prompt) q('.you').textContent = ev.prompt; q('.meta').textContent = `${ev.label} · ${ev.model}`; q('.meta').classList.add('dots'); setStatus(tr('{model} is working…', { model: ev.model })); }
       else if (ev.type === 'text') { job.answer += ev.text; q('.ans').textContent = job.answer.trim(); }
       else if (ev.type === 'thinking') { const t = q('.think'); t.hidden = false; t.textContent = (t.textContent + ev.text).slice(-400); }
       else if (ev.type === 'tool') { const d = document.createElement('div'); d.textContent = '› ' + ev.summary; q('.steps').appendChild(d); setStatus(ev.summary); }
@@ -415,8 +418,8 @@
         if (ev.answer) q('.ans').textContent = ev.answer;
         if (state) state.undo = ev.undo;
         const n = (ev.files || []).length;
-        q('.meta').textContent = ev.cancelled ? 'Arrêtée' : ev.error ? 'Échec' : n ? `${n} fichier(s) modifié(s) — rechargement…` : 'Aucun fichier modifié';
-        if (!ev.error) setStatus(ev.cancelled ? 'Demande arrêtée' : n ? 'Modifié — rechargement…' : 'Terminé, rien de modifié');
+        q('.meta').textContent = ev.cancelled ? tr('Stopped') : ev.error ? tr('Failed') : n ? tr('{n} file(s) changed, reloading…', { n }) : tr('No file changed');
+        if (!ev.error) setStatus(ev.cancelled ? tr('Request stopped') : n ? tr('Changed, reloading…') : tr('Done, nothing changed'));
         refresh();
       }
       scroll();
@@ -444,12 +447,12 @@
       ta.value = ''; files = []; lastSel = ''; renderFiles(); grow();
       setPanel(true, 'log');
       follow(res.job, text);
-    } catch (e) { setStatus('Échec de l’envoi : ' + e.message, true); refresh(); }
+    } catch (e) { setStatus(tr('Could not send: {error}', { error: tr(e.message) }), true); refresh(); }
   }
 
   undoBtn.addEventListener('click', async () => {
-    try { const r = await api('undo', {}); setStatus(r.ok ? `Annulé : ${r.files.join(', ')} — rechargement…` : r.message, !r.ok); if (state) state.undo = r.undo || 0; refresh(); }
-    catch (e) { setStatus('Annulation impossible : ' + e.message, true); }
+    try { const r = await api('undo', {}); setStatus(r.ok ? tr('Undone: {files}, reloading…', { files: r.files.join(', ') }) : tr(r.message), !r.ok); if (state) state.undo = r.undo || 0; refresh(); }
+    catch (e) { setStatus(tr('Could not undo: {error}', { error: tr(e.message) }), true); }
   });
   $('.gear').addEventListener('click', () => { location.href = '/__setup?next=' + encodeURIComponent(location.pathname + location.search + location.hash); });
   $('.panelbtn').addEventListener('click', () => setPanel(!(ui.panel && ui.view === 'log'), 'log'));
@@ -457,7 +460,7 @@
   $('.close').addEventListener('click', () => setPanel(false));
   $('.clear').addEventListener('click', async () => {
     if (running()) return;
-    try { await api('conversation/clear', {}); state.conversation = []; renderLog(); setStatus('Nouvelle conversation'); } catch (e) { setStatus(e.message, true); }
+    try { await api('conversation/clear', {}); state.conversation = []; renderLog(); setStatus(tr('New conversation')); } catch (e) { setStatus(e.message, true); }
   });
 
   ta.addEventListener('input', grow);
@@ -476,7 +479,7 @@
       if (state.running) { setPanel(true, 'log'); const t = (state.conversation || []).find(x => x.job === state.running); follow(state.running, t ? t.prompt : ''); }
       else {
         const last = (state.conversation || []).slice(-1)[0];
-        if (last && last.status === 'ok' && last.files && last.files.length) setStatus(`✓ ${last.answer || 'Modifié'}`.slice(0, 140));
+        if (last && last.status === 'ok' && last.files && last.files.length) setStatus(`✓ ${last.answer || tr('Changed')}`.slice(0, 140));
       }
     } catch (e) { setStatus('livequill : ' + e.message, true); }
   })();

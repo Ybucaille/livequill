@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // Records the README demo from a real run and takes the README screenshots.
-// It starts LiveQuill with an empty config, then: setup → first provider → "Mes sites" → add a site → open it →
-// type a request → live answer → auto reload → Undo → switch theme. Headless Chromium over the DevTools
-// protocol, frames assembled with ffmpeg. No npm dependency.
+// It starts LiveQuill with an empty config, then: setup → first provider → "My sites" → new site from the business
+// template → open it → type a request → live answer → auto reload → versions preview → Undo → switch theme.
+// Headless Chromium over the DevTools protocol, frames assembled with ffmpeg. No npm dependency.
 //
-//   node scripts/record-demo.mjs --home /tmp/demo-home --site '~/projects/nimbus' --out docs
+//   node scripts/record-demo.mjs --home ~/demo-home --provider ollama --model qwen2.5:7b-instruct --out docs
+//   node scripts/record-demo.mjs ... --shots-only      # screenshots only (no request to the model, no video)
 //
-// --home is used as $HOME for LiveQuill so the paths shown on screen stay short (~/projects/…). Link your
+// --home is used as $HOME for LiveQuill so the paths shown on screen stay short (~/LiveQuill/sites/…). Link your
 // CLI credentials into it first if you record with a CLI agent (e.g. ln -s ~/.claude ~/.claude.json).
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
@@ -16,11 +17,12 @@ import { fileURLToPath } from 'node:url';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const HOME = resolve(arg('home', tmpdir()));
-const SITE = arg('site', '~/projects/nimbus');
+const SITE = arg('site', 'Acme Bakery');                 // name typed in the new-site wizard
 const PROVIDER = arg('provider', 'cli-claude');        // setup card to click
 const MODEL = arg('model', 'haiku');                    // model to make default
 const PROMPT = arg('prompt', 'make the hero title red');
 const OUT = resolve(arg('out', 'docs'));
+const SHOTS_ONLY = process.argv.includes('--shots-only');   // README screenshots only: no model call, no video
 const PORT = +arg('port', 8790), CDP = 9333, W = 1280, H = 800;
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -108,7 +110,7 @@ async function click(sel) {
 async function type(text) { for (const ch of text) { await cdp('Input.insertText', { text: ch }); await sleep(45 + Math.random() * 45); } }
 const key = async (k, code = k, vk = 0) => { for (const t of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type: t, key: k, code, windowsVirtualKeyCode: vk }); };
 const base = `http://127.0.0.1:${PORT}`;
-const tokenOf = async url => (await (await fetch(new URL('/__setup', url))).text()).match(/lq-token" content="([^"]+)/)[1];
+const tokenOf = async url => (await (await fetch(new URL('/', url))).text()).match(/lq-token" content="([^"]+)|data-lq-token="([^"]+)/).slice(1).find(Boolean);
 const api = async (url, path, body) => (await fetch(new URL('/__lq/api/' + path, url), body === undefined
   ? { headers: { 'X-LQ-Token': await tokenOf(url) } }
   : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-LQ-Token': await tokenOf(url) }, body: JSON.stringify(body) })).json();
@@ -121,66 +123,84 @@ await sleep(2000); await js(CURSOR);
 await snap('setup.jpg');
 await cast(true);
 await sleep(1500);
-await click(`[data-kind="${PROVIDER}"]`);                      // detected on this machine: the test runs by itself
-await waitFor(`text:#f-models .m|${MODEL[0].toUpperCase() + MODEL.slice(1)}`);
+await click(`.pcard[data-kind="${PROVIDER}"]`);              // detected on this machine: the test runs by itself
+const label = PROVIDER === 'cli-claude' ? MODEL[0].toUpperCase() + MODEL.slice(1) : MODEL;
+await waitFor(`text:#pf-models .m|${label}`);
 await sleep(900);
-await click(`text:#f-models .m|${MODEL[0].toUpperCase() + MODEL.slice(1)}|input[type=radio]`);
+await click(`text:#pf-models .m|${label}|input[type=radio]`);
 await sleep(500);
 l = waitLoad();
-await click('#f-save');                                        // first provider saved → straight to "Mes sites"
+await click('#pf-save');                                       // first provider saved → straight to "My sites"
 await l; await sleep(1200); await js(CURSOR); await cast(true);
 
-// 2. Add a site and open it
-await click('#add');
-await sleep(600);
-await click('#f-root');
-await type(SITE);
-await sleep(500);
-await click('#f-save');
-await waitFor('[data-open]');
+// 2. Create a site from the business template, then open it
+await click('[data-wizard=create]');
+await sleep(900);
+await click('#wz-foot [data-next]');                           // static site
+await waitFor('[data-choice=business] iframe');
 await sleep(1200);
+await click('[data-choice=business]');
+await sleep(500);
+await snap('wizard.jpg');
+await click('#wz-foot [data-next]');
+await click('#wz-name');
+await type(SITE);
+await sleep(1400);
+await click('#wz-foot [data-next]');                           // create the site
+await waitFor('[data-done=open]');
+await sleep(1800);
 await js(`window.open = () => null`);                          // open in the same tab for the recording
 l = waitLoad();
-await click('[data-open]');
+await click('[data-done=open]');
 await l; await sleep(1500); await js(CURSOR); await cast(true);
 const site = (await api(base, 'sites')).sites[0].url;
 
-// 3. Ask for a change, watch the live panel, the page reloads by itself
-await click('bar:textarea');
-await type(PROMPT);
-await sleep(500);
-await key('Enter', 'Enter', 13);
-await sleep(1500);
-for (let i = 0; i < 600 && (await api(site, 'state')).running; i++) await sleep(500);
-l = waitLoad(8000); await l;
-await sleep(900); await js(CURSOR); await cast(true);
-await sleep(3200);
-await snap('hero.jpg');
+if (!SHOTS_ONLY) {
+  // 3. Ask for a change, watch the live panel, the page reloads by itself
+  await click('bar:textarea');
+  await type(PROMPT);
+  await sleep(500);
+  await key('Enter', 'Enter', 13);
+  await sleep(1500);
+  for (let i = 0; i < 600 && (await api(site, 'state')).running; i++) await sleep(500);
+  l = waitLoad(8000); await l;
+  await sleep(900); await js(CURSOR); await cast(true);
+  await sleep(3200);
+  await snap('hero.jpg');
 
-// 4. Undo
-l = waitLoad(8000);
-await click('bar:.undo');
-await l; await sleep(900); await js(CURSOR); await cast(true);
-await sleep(2300);
+  // 4. Versions: live preview of the site before the change, nothing restored
+  await click('bar:.versbtn');
+  await click('bar:.ver[data-id=origin]');
+  await sleep(2600);
+  await click('bar:.versbtn');
+  await sleep(600);
 
-// 5. Another theme
-await click('bar:.dd[data-key=theme] .dd-btn');
-await sleep(500);
-await click('bar:.opt[data-v="skin:chatgpt"]');
-await sleep(500);
-await click('bar:.opt[data-v="mode:light"]');
-await sleep(1200);
-await key('Escape', 'Escape', 27);
-await point(W - 220, H / 2);
-await sleep(2600);
-await cast(false);
-await cdp('Page.stopScreencast');
+  // 5. Undo
+  l = waitLoad(8000);
+  await click('bar:.undo');
+  await l; await sleep(900); await js(CURSOR); await cast(true);
+  await sleep(2300);
+
+  // 6. Another theme
+  await click('bar:.dd[data-key=theme] .dd-btn');
+  await sleep(500);
+  await click('bar:.opt[data-v="skin:chatgpt"]');
+  await sleep(500);
+  await click('bar:.opt[data-v="mode:light"]');
+  await sleep(1200);
+  await key('Escape', 'Escape', 27);
+  await point(W - 220, H / 2);
+  await sleep(2600);
+  await cast(false);
+  await cdp('Page.stopScreencast');
+}
 
 // --- README screenshots (not part of the video) ---
 const barClip = async () => js(`(() => { const r = document.getElementById('livequill').shadowRoot.querySelector('.box').getBoundingClientRect();
   return { x: Math.max(0, r.x - 40), y: Math.max(0, r.y - 30), width: Math.min(${W}, r.width + 80), height: r.height + 52 }; })()`);
 await js(`document.getElementById('rec-cursor')?.remove()`);
-await api(site, 'providers/save', { type: 'ollama', label: 'Ollama', default_model: 'qwen2.5:7b-instruct', models: [
+const ollama = Object.entries((await api(site, 'kinds')).providers).find(([, p]) => p.type === 'ollama');   // update it rather than add a second one
+await api(site, 'providers/save', { id: ollama ? ollama[0] : null, type: 'ollama', label: 'Ollama', make_default: true, default_model: 'qwen2.5:7b-instruct', models: [
   { id: 'qwen2.5:7b-instruct', label: 'qwen2.5:7b-instruct · 7.6B', meta: { capabilities: ['completion', 'tools'] }, shown: true },
   { id: 'llama3.2:3b', label: 'llama3.2:3b · 3.2B', meta: { capabilities: ['completion', 'tools'] }, shown: true }] });
 await api(site, 'conversation/clear', {});
@@ -201,22 +221,24 @@ for (const [skin, mode] of [['claude', 'dark'], ['chatgpt', 'light'], ['gemini',
     await key('Escape', 'Escape', 27);
   }
 }
-for (const p of ['~/projects/portfolio', '~/projects/blog']) await api(base, 'sites/save', { root: p });
-l = waitLoad(); await cdp('Page.navigate', { url: base + '/' }); await l; await sleep(1500);
+for (const [name, template] of [['Studio Portfolio', 'blank'], ['Spring Event', 'business']]) await api(base, 'sites/create', { name, template });
+l = waitLoad(); await cdp('Page.navigate', { url: base + '/' }); await l; await sleep(2500);
 await snap('hub.jpg');
 
 ws.close(); cleanup();
 
 // --- assemble: real durations between frames, then MP4 (H.264) and a light GIF ---
-const list = shots.map((s, i) => `file '${s.f}'\nduration ${Math.max(0.01, ((shots[i + 1]?.t ?? s.t + 1) - s.t)).toFixed(3)}`).join('\n') + `\nfile '${shots.at(-1).f}'\n`;
-writeFileSync(join(work, 'list.txt'), list);
-execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(work, 'list.txt'), '-vf', 'fps=30,format=yuv420p',
-  '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', join(OUT, 'demo.mp4')]);
-execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(OUT, 'demo.mp4'), '-vf',
-  'fps=8,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', join(OUT, 'demo.gif')]);
+if (!SHOTS_ONLY) {
+  const list = shots.map((s, i) => `file '${s.f}'\nduration ${Math.max(0.01, ((shots[i + 1]?.t ?? s.t + 1) - s.t)).toFixed(3)}`).join('\n') + `\nfile '${shots.at(-1).f}'\n`;
+  writeFileSync(join(work, 'list.txt'), list);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(work, 'list.txt'), '-vf', 'fps=30,format=yuv420p',
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', join(OUT, 'demo.mp4')]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(OUT, 'demo.mp4'), '-vf',
+    'fps=8,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', join(OUT, 'demo.gif')]);
+}
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...themes.flatMap(t => ['-i', t]), '-filter_complex',
   themes.map((_, i) => `[${i}]scale=720:-1,pad=720:ih:(ow-iw)/2[t${i}]`).join(';') + ';' + themes.map((_, i) => `[t${i}]`).join('') + `vstack=inputs=${themes.length}`,
   join(OUT, 'images', 'themes.png')]);
 for (const t of themes) rmSync(t);
 rmSync(work, { recursive: true, force: true });
-console.log(`${shots.length} frames → ${join(OUT, 'demo.mp4')}, demo.gif, images/`);
+console.log(SHOTS_ONLY ? `screenshots → ${join(OUT, 'images')}` : `${shots.length} frames → ${join(OUT, 'demo.mp4')}, demo.gif, images/`);

@@ -106,7 +106,7 @@ class PreviewRoute(unittest.TestCase):
         s, ctype, body = self.get('/__lq/preview/origin/')
         self.assertEqual(s, 200)
         self.assertIn(b'<h1>v0</h1>', body)
-        self.assertIn('Aperçu · avant toute modification'.encode(), body)
+        self.assertIn(b'Preview \xc2\xb7 before any change', body)
         self.assertNotIn(b'overlay.js', body)                              # pas de barre dans un aperçu
         self.assertEqual(self.get('/__lq/preview/origin/style.css')[2], b'h1{}')
         self.assertIn(b'<h1>v1</h1>', self.get('/')[2])                    # le site, lui, est à la version actuelle

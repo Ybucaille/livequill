@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Construit dist/livequill.pyz : LiveQuill en un seul fichier exécutable (python3 livequill.pyz).
 
-Archive reproductible : fichiers triés, dates fixes. Seuls le code et livequill/static/ y entrent.
+Archive reproductible : fichiers triés, dates fixes. Seuls le code, livequill/static/ et livequill/templates/ y entrent.
 
     python3 scripts/build-pyz.py [--out dist/livequill.pyz]
 """
@@ -17,7 +17,7 @@ def files():
     for d, dirs, names in os.walk(pkg):
         dirs[:] = sorted(x for x in dirs if x != '__pycache__')
         for n in sorted(names):
-            if n.endswith('.py') or os.path.relpath(d, pkg).split(os.sep)[0] == 'static':
+            if n.endswith('.py') or os.path.relpath(d, pkg).split(os.sep)[0] in ('static', 'templates'):
                 full = os.path.join(d, n)
                 yield full, os.path.relpath(full, REPO).replace(os.sep, '/')
 

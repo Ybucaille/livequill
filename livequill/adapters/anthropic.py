@@ -42,7 +42,7 @@ class AnthropicAdapter(Adapter):
         out = []
         for m in messages:
             if m['role'] == 'tool':
-                blocks = [{'type': 'tool_result', 'tool_use_id': r['id'], 'content': r['content'] or '(vide)',
+                blocks = [{'type': 'tool_result', 'tool_use_id': r['id'], 'content': r['content'] or '(empty)',
                            **({'is_error': True} if r.get('is_error') else {})} for r in m['results']]
                 out.append({'role': 'user', 'content': blocks})
                 continue

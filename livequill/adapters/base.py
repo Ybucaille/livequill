@@ -58,7 +58,7 @@ class Adapter:
     # --- commun ----------------------------------------------------------
     def test(self):
         models = self.list_models()
-        return f'{len(models)} modèle(s) disponible(s)', models
+        return f'{len(models)} model(s) available', models
 
     def chat(self, model, system, messages, tools, opts, job=None):
         method, url, headers, body = self.build_request(model, system, messages, tools, opts)
@@ -76,7 +76,7 @@ def looks_like_no_tools(body):
         or 'function calling is not enabled' in b
 
 
-EFFORT_LABELS = {'off': 'Désactivée', 'on': 'Activée', 'minimal': 'Minimal', 'low': 'Low', 'medium': 'Medium',
+EFFORT_LABELS = {'off': 'Off', 'on': 'On', 'minimal': 'Minimal', 'low': 'Low', 'medium': 'Medium',
                  'high': 'High', 'xhigh': 'Extra high', 'max': 'Max'}
 
 

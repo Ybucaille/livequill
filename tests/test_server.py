@@ -184,7 +184,7 @@ class HubMode(unittest.TestCase):
         self.config.upsert('ollama', {'type': 'ollama', 'models': [{'id': 'qwen', 'label': 'qwen'}], 'default_model': 'qwen'})
         s, _, body = self.req('GET', '/')
         self.assertEqual(s, 200)
-        self.assertIn(b'Mes sites', body)
+        self.assertIn(b'My sites', body)
         self.assertIn(self.hub.token.encode(), body)
         tok = self.hub.token
         self.assertEqual(json.loads(self.req('GET', '/__lq/api/sites', token=tok)[2])['sites'], [])
@@ -217,7 +217,8 @@ class HubMode(unittest.TestCase):
         self.assertEqual(self.req('GET', '/__lq/api/sites')[0], 403)                  # sans jeton
         r = json.loads(self.req('GET', '/__lq/api/browse?path=' + self.site_root, token=tok)[2])
         self.assertEqual(r['path'], os.path.realpath(self.site_root))
-        self.assertIn('html', r['hints'])
+        self.assertTrue(r['here']['html'])
+        self.assertEqual(r['crumbs'][-1]['path'], r['path'])
 
     def test_ensure_from_command_line(self):
         sid = self.hub.sites.ensure(self.site_root)

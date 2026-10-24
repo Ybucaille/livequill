@@ -21,7 +21,9 @@ class Zipapp(unittest.TestCase):
         out = subprocess.run([sys.executable, self.pyz, '--version'], capture_output=True, text=True, check=True).stdout
         self.assertEqual(out.strip(), f'livequill {livequill.__version__}')
         code = ('import livequill.server as s; assert s.__file__.startswith(%r), s.__file__; '
-                'print(all(len(s.asset(n)) > 1000 for n in ("overlay.js", "setup.html", "hub.html")))' % self.pyz)
+                'from livequill import scaffold; '
+                'print(all(len(s.asset(n)) > 1000 for n in ("overlay.js", "setup.html", "hub.html", "ui.js", "theme.css")) '
+                'and len(scaffold.files("business")) == 2)' % self.pyz)
         out = subprocess.run([sys.executable, '-I', '-c', 'import sys; sys.path.insert(0, %r); %s' % (self.pyz, code)],
                              capture_output=True, text=True, cwd=self.dir)
         self.assertEqual(out.stdout.strip(), 'True', out.stderr)

@@ -48,6 +48,14 @@ class Config:
             os.chmod(tmp, 0o600)
             os.replace(tmp, self.path)
 
+    def set_option(self, key, value):
+        with self.lock:
+            if value in (None, ''):
+                self.data.pop(key, None)
+            else:
+                self.data[key] = value
+            self.save()
+
     @property
     def configured(self):
         return bool(self.data['providers'])

@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// Syntax check for the browser code: overlay.js and the inline <script> of every HTML page. Used by CI.
+// Syntax check for the browser code: every script in livequill/static and the inline <script> of every HTML page. Used by CI.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const files = [join(root, 'livequill/static/overlay.js')];
+const files = [];
 for (const dir of ['livequill/static', 'site']) {
-  try { for (const f of readdirSync(join(root, dir))) if (f.endsWith('.html')) files.push(join(root, dir, f)); } catch {}
+  try { for (const f of readdirSync(join(root, dir)).sort()) if (/\.(html|js)$/.test(f)) files.push(join(root, dir, f)); } catch {}
 }
 let failed = 0;
 for (const f of files) {

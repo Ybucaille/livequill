@@ -1,182 +1,52 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="lq-token" content="__LQ_TOKEN__">
-<title>LiveQuill · fournisseurs</title>
+<title>LiveQuill · Welcome</title>
+<link rel="stylesheet" href="/__lq/theme.css">
 <style>
-  /* Jour par défaut, nuit si le système est en sombre */
-  :root{
-    --sky-1:#7fb8f5;--sky-2:#b9dcff;--sky-3:#eef7ff;--cloud:#ffffff;--cloud-o:.92;--cushion:#ffffff;--cushion-o:.95;--glow:rgba(255,236,170,.75);
-    --ink:#12203a;--soft:#33445f;--mute:#5d6d88;--line:rgba(255,255,255,.85);--line2:rgba(18,32,58,.10);
-    --glass:rgba(255,255,255,.52);--glass-2:rgba(255,255,255,.80);--card:rgba(255,255,255,.72);--card-h:rgba(255,255,255,.95);
-    --field:rgba(255,255,255,.9);--shadow:0 24px 60px rgba(40,80,140,.22);
-    --acc:#d4623c;--acc-2:#b9502c;--acc-soft:rgba(217,119,87,.14);
-    --ok:#1c9a59;--warn:#b7800d;--bad:#d13f37;--local:#0f8a6a;--cloudc:#2f6fd6;--cli:#7a4fd0;
-  }
-  @media (prefers-color-scheme: dark){:root{
-    --sky-1:#050817;--sky-2:#0c1433;--sky-3:#1a2754;--cloud:#2e3d70;--cloud-o:.55;--cushion:#4a5c9e;--cushion-o:.62;--glow:rgba(200,215,255,.35);
-    --ink:#eef2ff;--soft:#c3cbe6;--mute:#93a0c4;--line:rgba(255,255,255,.14);--line2:rgba(255,255,255,.08);
-    --glass:rgba(16,24,54,.55);--glass-2:rgba(22,32,70,.85);--card:rgba(255,255,255,.06);--card-h:rgba(255,255,255,.11);
-    --field:rgba(8,12,30,.6);--shadow:0 24px 70px rgba(0,0,0,.45);
-    --acc:#e8845f;--acc-2:#f0a37f;--acc-soft:rgba(232,132,95,.16);
-    --ok:#73d6a0;--warn:#f0c060;--bad:#ff8a7a;--local:#5fd3b1;--cloudc:#7fb0ff;--cli:#b598ff;
-  }}
-  *{box-sizing:border-box}
-  html,body{min-height:100%}
-  body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--sky-2);overflow-x:hidden}
-  a{color:var(--acc)}
-  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc-2)}
-
-  /* --- Ciel : dégradé, astre, étoiles, nuages en parallaxe --- */
-  .sky{position:fixed;inset:0;z-index:-1;overflow:hidden;background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 45%,var(--sky-3) 100%)}
-  .astre{position:absolute;top:-90px;right:8%;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,var(--glow) 0%,transparent 65%)}
-  .stars{position:absolute;inset:0;opacity:0}
-  @media (prefers-color-scheme: dark){
-    .stars{opacity:.85;background-image:radial-gradient(1.4px 1.4px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 28% 8%,#fff 50%,transparent 51%),
-      radial-gradient(1.2px 1.2px at 47% 22%,#dfe6ff 50%,transparent 51%),radial-gradient(1px 1px at 63% 12%,#fff 50%,transparent 51%),
-      radial-gradient(1.6px 1.6px at 78% 30%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 88% 9%,#cfd8ff 50%,transparent 51%),
-      radial-gradient(1.2px 1.2px at 6% 42%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 35% 38%,#fff 50%,transparent 51%),
-      radial-gradient(1.3px 1.3px at 55% 46%,#e6ebff 50%,transparent 51%),radial-gradient(1px 1px at 93% 48%,#fff 50%,transparent 51%);
-      animation:twinkle 5s ease-in-out infinite alternate}
-  }
-  @keyframes twinkle{from{opacity:.55}to{opacity:.95}}
-  .cloud{position:absolute;left:0;top:var(--y);width:calc(260px * var(--s));height:calc(64px * var(--s));border-radius:999px;background:var(--cloud);
-    opacity:calc(var(--cloud-o) * var(--o));filter:blur(var(--b));will-change:transform;animation:drift var(--d) linear infinite;animation-delay:var(--dl)}
-  .cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
-  .cloud::before{width:46%;height:160%;left:16%;bottom:22%}
-  .cloud::after{width:34%;height:125%;right:14%;bottom:26%}
-  @keyframes drift{from{transform:translateX(-45vw)}to{transform:translateX(145vw)}}
-  /* Rendu GPU (WebGL2) : remplace les nuages CSS, qui restent en secours */
-  #sky-gl{position:absolute;inset:0;width:100%;height:100%;display:none}
-  .sky.gl #sky-gl{display:block}
-  .sky.gl .astre,.sky.gl .stars,.sky.gl #clouds{display:none}
-
-  /* --- Mise en page --- */
-  main{max-width:1180px;margin:0 auto;padding:26px 20px 90px}
-  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em;flex:1}
-  .brand svg{width:34px;height:34px;filter:drop-shadow(0 4px 10px rgba(212,98,60,.35))}
-  .links{display:flex;gap:10px;align-items:center}
-  .links a[hidden]{display:none}
-  .pill-link{padding:9px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);color:var(--ink);text-decoration:none;font-size:14px}
-  .go{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;background:var(--acc);color:#fff;text-decoration:none;font-weight:600;box-shadow:0 10px 26px rgba(212,98,60,.35)}
-  .go:hover{filter:brightness(1.07)}
-  .hero{text-align:center;margin:46px auto 34px;max-width:760px}
-  .hero h1{margin:0 0 10px;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
-  .hero p{margin:0 auto;color:var(--soft);font-size:clamp(15.5px,1.8vw,18px);max-width:620px}
+  .steps{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 16px}
+  .steps span{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;background:var(--glass);border:1px solid var(--line);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:13px;color:var(--mute)}
+  .steps span.on{color:var(--ink);font-weight:600}
+  .steps i{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line2);font-style:normal;font-size:12px;font-weight:700}
+  .steps .on i{background:var(--acc);color:#fff}
   .legend{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-  .legend span{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);font-size:13px;color:var(--soft)}
-
+  .legend>span{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:13px;color:var(--soft)}
   .isles{display:grid;grid-template-columns:1fr 1fr;gap:54px 34px;align-items:start}
-  .isle{position:relative;padding-bottom:26px}
   .isle.cli{grid-column:1 / -1;max-width:760px;width:100%;justify-self:center}
-  /* le coussin de nuage sur lequel l'île est posée */
-  .cushion{position:absolute;left:4%;right:4%;bottom:-6px;height:70px;z-index:0;pointer-events:none}
-  .cushion i{position:absolute;bottom:0;border-radius:50%;background:var(--cushion);opacity:var(--cushion-o);filter:blur(10px)}
-  .cushion i:nth-child(1){left:0;width:38%;height:62px}
-  .cushion i:nth-child(2){left:24%;width:52%;height:78px;bottom:6px}
-  .cushion i:nth-child(3){right:0;width:40%;height:58px}
-  .island{position:relative;z-index:1;padding:22px 22px 20px;border-radius:30px;background:var(--glass);border:1px solid var(--line);
-    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);box-shadow:var(--shadow);
-    animation:bob 7s ease-in-out infinite;animation-delay:var(--bd,0s)}
-  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
   .ihead{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
-  .ico{flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:15px;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.15)}
-  .ico svg{width:24px;height:24px}
   .local .ico{background:linear-gradient(135deg,#19b38a,#0f8a6a)}
   .cloudg .ico{background:linear-gradient(135deg,#4d8df0,#2f6fd6)}
   .cli .ico{background:linear-gradient(135deg,#9a72f0,#7a4fd0)}
   .ihead h2{margin:0;font-size:21px;letter-spacing:-.01em}
   .ihead p{margin:3px 0 0;color:var(--soft);font-size:14px}
   .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-  .tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--line2)}
   .local .tag{color:var(--local)} .cloudg .tag{color:var(--cloudc)} .cli .tag{color:var(--cli)}
-
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .cli .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .card{position:relative;display:flex;flex-direction:column;gap:3px;min-height:112px;padding:13px 14px 12px;border-radius:18px;background:var(--card);
-    border:1px solid var(--line2);cursor:pointer;outline:0;transition:transform .18s,background .18s,box-shadow .18s,border-color .18s}
-  .card:hover,.card:focus-visible{transform:translateY(-2px);background:var(--card-h);box-shadow:0 12px 26px rgba(20,40,80,.14);border-color:var(--line)}
-  .card:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-  .card.sel{border-color:var(--acc)}
-  .kh{display:flex;align-items:center;gap:10px}
-  .kh b{flex:1;font-weight:650;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dot{flex:none;width:12px;height:12px;border-radius:50%;border:1.5px solid var(--mute)}
-  .st-ok .dot{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 22%,transparent)}
-  .st-found .dot{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 35%,transparent)}
-  .st-bad .dot{background:var(--bad);border-color:var(--bad)}
-  .st-check .dot{border-color:var(--soft);border-top-color:transparent;animation:spin .8s linear infinite}
-  .card.add .dot{border-style:dashed}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .state{font-size:12.5px;font-weight:600;color:var(--mute)}
-  .st-ok .state{color:var(--ok)}.st-found .state{color:var(--warn)}.st-bad .state{color:var(--bad)}
-  .card small{color:var(--soft);font-size:12.5px;line-height:1.4}
-  .card .ext{margin-top:auto;padding-top:4px;font-size:12.5px;width:max-content;font-weight:600}
-  .badge{position:absolute;right:12px;bottom:10px;font-size:11px;font-weight:700;color:var(--acc)}
   footer{margin-top:46px;text-align:center;color:var(--soft);font-size:13px}
   footer span{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px)}
-
-  /* --- Carte de configuration flottante --- */
-  .overlay{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:20px;background:rgba(8,16,36,.32);backdrop-filter:blur(5px)}
-  .overlay.open{display:grid;animation:fade .2s ease-out}
-  @keyframes fade{from{opacity:0}}
-  form{position:relative;width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:24px;border-radius:28px;background:var(--glass-2);
-    border:1px solid var(--line);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);box-shadow:0 40px 90px rgba(0,0,0,.35);
-    animation:pop .26s cubic-bezier(.2,.9,.3,1.2);scrollbar-width:thin}
-  @keyframes pop{from{transform:translateY(14px) scale(.97);opacity:0}}
-  form[hidden]{display:none}
-  .x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:0;background:var(--line2);color:var(--ink);font-size:18px;cursor:pointer}
-  form h3{margin:0 40px 6px 0;font-size:21px;letter-spacing:-.01em}
-  .kindtag{display:inline-block;margin-bottom:10px}
-  .howto{margin:4px 0 4px;padding:12px 14px;border-radius:14px;background:var(--line2);font-size:14px;color:var(--soft)}
-  .howto a{font-weight:600}
-  label{display:block;margin:14px 0 5px;font-size:13px;font-weight:600;color:var(--soft)}
-  input[type=text],input[type=password],input[type=url],input[type=number],input[type=search],select{width:100%;padding:11px 13px;border:1px solid var(--line2);
-    border-radius:12px;background:var(--field);color:var(--ink);font:inherit}
-  input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--acc) 55%,transparent);border-color:var(--acc)}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
-  .row .sp{flex:1}
-  .check{display:flex;gap:9px;align-items:center;margin:12px 0 0;color:var(--soft);font-size:14px}
-  .check label{margin:0;font-weight:500}
-  .check input{accent-color:var(--acc);width:16px;height:16px}
-  button.b{padding:10px 16px;border:1px solid var(--line2);border-radius:12px;background:var(--card-h);color:var(--ink);cursor:pointer;font:inherit;font-weight:600}
-  button.b:hover{filter:brightness(1.04)}
-  button.b.pri{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 8px 20px rgba(212,98,60,.3)}
-  button.b.danger{color:var(--bad);background:none}
-  button.b:disabled{opacity:.45;cursor:default;box-shadow:none}
-  button.b[hidden]{display:none}
-  .msg{font-size:14px;font-weight:600}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
-  .models{margin-top:12px;max-height:280px;overflow:auto;border:1px solid var(--line2);border-radius:14px;background:var(--card);scrollbar-width:thin}
-  .models[hidden]{display:none}
-  .m{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 13px;border-top:1px solid var(--line2);font-size:14px}
-  .m:first-child{border-top:0}
-  .m input{accent-color:var(--acc)}
-  .m small{color:var(--mute);font-size:12px}
-  .m .def{font-size:12px;color:var(--mute);display:flex;gap:5px;align-items:center;margin:0;font-weight:500}
-  details{margin-top:14px;color:var(--soft);font-size:14px}
-  details[hidden]{display:none}
-  summary{cursor:pointer;color:var(--mute);font-weight:600}
-
-  @media (max-width:900px){.isles{grid-template-columns:1fr;gap:46px}.cli .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  @media (max-width:520px){.grid,.cli .grid{grid-template-columns:1fr}.island{padding:18px 16px;border-radius:24px}.hero{margin:30px auto 26px}}
-  @media (prefers-reduced-motion: reduce){.cloud,.island,.stars,.overlay.open,form{animation:none}.card{transition:none}}
+  @media (max-width:900px){.isles{grid-template-columns:1fr;gap:46px}}
 </style>
 </head>
 <body>
-<div class="sky" aria-hidden="true"><canvas id="sky-gl"></canvas><div class="astre"></div><div class="stars"></div><div id="clouds"></div></div>
-
 <main>
   <header class="top">
-    <div class="brand"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#d97757"/><path d="M44 12c-10 2-20 12-24 26l-4 14 8-6c12-4 22-14 24-26-4 2-8 3-12 3 3-3 6-7 8-11z" fill="#fff"/></svg>LiveQuill</div>
-    <div class="links"><a class="pill-link" id="hub" href="/" hidden>Tous mes sites ↗</a><a class="go" id="go" href="/" hidden>Mes sites →</a></div>
+    <span class="brand" id="brand"></span>
+    <div id="lang"></div>
   </header>
 
   <section class="hero">
-    <h1 id="headline">Où doit tourner ton modèle ?</h1>
-    <p id="intro">Choisis le modèle qui modifiera tes sites : sur ta machine, gratuit et privé, ou dans le cloud, plus puissant. Tu pourras en ajouter d’autres et en changer à tout moment.</p>
-    <div class="legend"><span><i class="dot" style="background:var(--ok);border-color:var(--ok)"></i>Disponible</span><span><i class="dot" style="border-color:var(--warn);background:color-mix(in srgb,var(--warn) 35%,transparent)"></i>Détecté, un clic pour l’activer</span><span><i class="dot"></i>À configurer</span></div>
+    <div class="steps" id="steps"></div>
+    <h1 data-t>Where should your model run?</h1>
+    <p id="intro" data-t>Choose the model that will edit your sites: on your computer, free and private, or in the cloud, more powerful. You can add others and switch at any time.</p>
+    <div class="legend">
+      <span class="st-ok"><i class="dot"></i><span data-t>Available</span></span>
+      <span class="st-found"><i class="dot"></i><span data-t>Detected, one click to enable</span></span>
+      <span><i class="dot"></i><span data-t>To set up</span></span>
+    </div>
   </section>
 
   <div class="isles">
@@ -185,22 +55,22 @@
       <div class="island">
         <div class="ihead">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></div>
-          <div><h2 id="h-local">Sur ta machine</h2><p>Le modèle tourne sur ton ordinateur. Tes fichiers et tes demandes n’en sortent jamais.</p>
-            <div class="tags"><span class="tag">100 % local</span><span class="tag">Gratuit</span><span class="tag">Hors ligne</span></div></div>
+          <div><h2 id="h-local" data-t>On your computer</h2><p data-t>The model runs on your computer. Your files and requests never leave it.</p>
+            <div class="tags"><span class="tag" data-t>100% local</span><span class="tag" data-t>Free</span><span class="tag" data-t>Works offline</span></div></div>
         </div>
-        <div class="grid" data-group="local"></div>
+        <div class="pgrid" data-group="local"></div>
       </div>
     </section>
 
-    <section class="isle cloudg" aria-labelledby="h-cloud" style="--bd:-3.5s">
+    <section class="isle cloudg" aria-labelledby="h-cloud">
       <div class="cushion" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="island" style="--bd:-3.5s">
         <div class="ihead">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.34 9.5 4 4 0 0 0 7 19z"/></svg></div>
-          <div><h2 id="h-cloud">Dans le cloud</h2><p>Les modèles les plus puissants, via une clé API. Ta demande et les fichiers lus sont envoyés au fournisseur.</p>
-            <div class="tags"><span class="tag">En ligne</span><span class="tag">Clé API</span><span class="tag">Payant à l’usage</span></div></div>
+          <div><h2 id="h-cloud" data-t>In the cloud</h2><p data-t>The most powerful models, with an API key. Your request and the files read are sent to the provider.</p>
+            <div class="tags"><span class="tag" data-t>Online</span><span class="tag" data-t>API key</span><span class="tag" data-t>Pay as you go</span></div></div>
         </div>
-        <div class="grid" data-group="cloud"></div>
+        <div class="pgrid" data-group="cloud"></div>
       </div>
     </section>
 
@@ -209,394 +79,34 @@
       <div class="island" style="--bd:-1.8s">
         <div class="ihead">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4M12 16h7"/><rect x="2" y="3" width="20" height="18" rx="3"/></svg></div>
-          <div><h2 id="h-cli">Tes agents de code</h2><p>Les outils que tu utilises déjà, avec ton compte : en CLI, ou directement via l’app Claude Desktop ou ChatGPT. Ils sont installés ici, mais leurs modèles tournent dans le cloud.</p>
-            <div class="tags"><span class="tag">Installé sur ta machine</span><span class="tag">Modèles en ligne</span><span class="tag">Ton abonnement</span></div></div>
+          <div><h2 id="h-cli" data-t>Your coding agents</h2><p data-t>The tools you already use, with your account: as a CLI, or straight from the Claude Desktop or ChatGPT app. They are installed here, but their models run in the cloud.</p>
+            <div class="tags"><span class="tag" data-t>Installed on your computer</span><span class="tag" data-t>Online models</span><span class="tag" data-t>Your subscription</span></div></div>
         </div>
-        <div class="grid" data-group="cli"></div>
+        <div class="pgrid three" data-group="cli"></div>
       </div>
     </section>
   </div>
 
-  <footer><span>🔒 Les clés restent sur cette machine, dans <code>~/.config/livequill/config.json</code> (droits 600), et ne passent jamais par le navigateur.</span></footer>
+  <footer><span id="keys"></span></footer>
 </main>
-
-<div class="overlay" id="overlay">
-  <form id="form" hidden autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="f-title">
-    <button type="button" class="x" id="f-x" aria-label="Fermer">×</button>
-    <span class="tag kindtag" id="f-kind"></span>
-    <h3 id="f-title"></h3>
-    <div class="howto" id="f-howto"></div>
-    <label for="f-label">Nom affiché</label>
-    <input type="text" id="f-label" placeholder="ex. Ollama du portable">
-    <div id="f-fields"></div>
-    <details id="f-adv"><summary>Avancé</summary>
-      <label for="f-toolmode">Appels d’outils</label>
-      <select id="f-toolmode"><option value="">Automatique (tool calls natifs si le modèle les gère)</option><option value="text">Mode texte (blocs fichier/diff, pour les modèles sans tool calls)</option></select>
-      <div class="check"><input type="checkbox" id="f-vision"><label for="f-vision">Forcer la vision (envoyer les images au modèle)</label></div>
-    </details>
-    <div class="row">
-      <button type="button" class="b" id="f-test">Tester la connexion</button>
-      <span class="msg" id="f-msg" role="status"></span>
-    </div>
-    <input type="search" id="f-filter" placeholder="Filtrer les modèles…" hidden style="margin-top:12px">
-    <div class="models" id="f-models" hidden></div>
-    <div class="check"><input type="checkbox" id="f-default"><label for="f-default">Fournisseur par défaut dans la barre</label></div>
-    <div class="row">
-      <button type="submit" class="b pri" id="f-save" disabled>Enregistrer</button>
-      <button type="button" class="b" id="f-cancel">Fermer</button>
-      <span class="sp"></span>
-      <button type="button" class="b danger" id="f-delete" hidden>Supprimer</button>
-    </div>
-  </form>
-</div>
+<script src="/__lq/ui.js"></script>
+<script src="/__lq/providers.js"></script>
+<script src="/__lq/sky.js"></script>
 <script>
 (() => {
-  const TOKEN = document.querySelector('meta[name=lq-token]').content;
+  const { t, esc, $, logo, langMenu, providers } = LQ;
   const next = new URLSearchParams(location.search).get('next') || '/';
-  const $ = s => document.querySelector(s);
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const api = async (path, body) => {
-    const res = await fetch('/__lq/api/' + path, body === undefined ? { headers: { 'X-LQ-Token': TOKEN } } :
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-LQ-Token': TOKEN }, body: JSON.stringify(body) });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok && !('ok' in data)) throw new Error(data.error || 'HTTP ' + res.status);
-    return data;
-  };
-  let K = {}, P = {}, D = null, det = null, status = {}, edit = null, models = [], lastFocus = null;
-  const BASES = { ollama: 'http://127.0.0.1:11434', lmstudio: 'http://127.0.0.1:1234/v1', llamacpp: 'http://127.0.0.1:8080/v1', custom: 'http://127.0.0.1:8000/v1' };
-  const GROUP = { local: 'Sur ta machine', cloud: 'Dans le cloud', cli: 'Agent de code' };
-  const extLink = d => d.url ? `<a class="ext" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url_label || 'Site')} ↗</a>` : '';
-
-  /* Ciel : rendu GPU (WebGL2) de nuages volumétriques, sinon nuages CSS de secours */
-  function cssClouds() {
-    const layers = [[7, 0.55, 0.45, '7px', 150, 210], [5, 0.85, 0.7, '4px', 100, 150], [4, 1.25, 0.9, '2px', 70, 110]];
-    let html = '';
-    for (const [n, s, o, b, dmin, dmax] of layers) {
-      for (let i = 0; i < n; i++) {
-        const d = dmin + Math.random() * (dmax - dmin);
-        html += `<div class="cloud" style="--y:${(Math.random() * 92).toFixed(1)}%;--s:${(s * (0.75 + Math.random() * 0.6)).toFixed(2)};--o:${o};--b:${b};--d:${d.toFixed(0)}s;--dl:-${(Math.random() * d).toFixed(0)}s"></div>`;
-      }
-    }
-    $('#clouds').innerHTML = html;
-  }
-
-  function glSky() {
-    const canvas = $('#sky-gl'), gl = canvas.getContext('webgl2', { alpha: false, antialias: false, powerPreference: 'low-power' });
-    if (!gl) return false;
-    const vert = `#version 300 es
-      void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);gl_Position=vec4(p*2.-1.,0.,1.);}`;
-    // Bruit fractal déformé (« domain warping ») sur trois couches ; éclairage par différence de densité vers l'astre
-    const frag = `#version 300 es
-      precision highp float;
-      out vec4 o;
-      uniform vec2 R; uniform float T, D; uniform vec2 M;
-      float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-      float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-        return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
-      float fbm(vec2 p,int k){float v=0.,a=.5;for(int i=0;i<6;i++){if(i>=k)break;v+=a*n(p);p=mat2(1.6,1.2,-1.2,1.6)*p+.17;a*=.5;}return v;}
-      float cloud(vec2 q,float t,int k){
-        vec2 w=vec2(fbm(q*.9+vec2(t*.6,0.),3),fbm(q*.9+vec2(4.7,1.3-t*.4),3));
-        return fbm(q*1.4+w*1.6+vec2(t,0.),k);}
-      void main(){
-        vec2 uv=gl_FragCoord.xy/R, p=(uv-.5)*vec2(R.x/R.y,1.);
-        vec3 sky=mix(mix(vec3(.74,.87,1.),vec3(.18,.46,.90),pow(uv.y,.85)),mix(vec3(.07,.12,.30),vec3(.008,.018,.06),uv.y),D);
-        vec2 L=vec2(.33*R.x/R.y,.42);
-        float g=exp(-length((p-L)*vec2(1.,1.25))*2.6);
-        sky+=mix(vec3(1.,.9,.68)*.55,vec3(.55,.66,1.)*.32,D)*g;
-        sky+=mix(vec3(1.,.97,.85),vec3(.85,.9,1.),D)*smoothstep(.06,.045,length(p-L))*mix(.9,.75,D);
-        // étoiles (nuit) : grille aléatoire, scintillement lent
-        vec2 sg=p*120.,sid=floor(sg),sf=fract(sg)-.5;float sr=h(sid);
-        float st=step(.985,sr)*(1.-smoothstep(.0,.09,length(sf-(vec2(h(sid+3.),h(sid+7.))-.5)*.6)))*(.6+.4*sin(T*(.6+sr*2.)+sr*40.));
-        sky+=vec3(.85,.9,1.)*st*D*smoothstep(-.1,.3,p.y);
-        vec3 lit=mix(vec3(1.),vec3(.72,.80,1.),D), shade=mix(vec3(.55,.65,.82),vec3(.08,.12,.29),D), rim=mix(vec3(1.,.93,.80),vec3(.85,.92,1.),D);
-        // couches : lointaine (voiles), milieu, proche (mer de nuages en bas)
-        for(int l=0;l<3;l++){
-          float fl=float(l);
-          float sc=mix(2.6,1.15,fl*.5), sp=mix(.010,.034,fl*.5), par=mix(.03,.12,fl*.5);
-          vec2 q=p*sc+M*par+vec2(fl*7.3,fl*3.1);
-          float t=T*sp;
-          float c=cloud(q,t,l==0?4:5);
-          float mask=l==0?.55*smoothstep(-.2,.3,p.y)+.15:l==1?1.-smoothstep(-.1,.38,p.y):1.-smoothstep(-.42,-.02,p.y);
-          float th=l==2?.36:l==1?.42:.47;
-          float dns=smoothstep(th,th+.2,c)*mask;
-          if(dns<.003)continue;
-          vec2 toL=normalize(L-p)*.09;
-          float c2=cloud(q+toL*sc,t,3);
-          float light=clamp(.5+(c-c2)*4.5,0.,1.);
-          vec3 col=mix(shade,lit,light);
-          col+=rim*smoothstep(.45,0.,dns)*(g*.9+.12)*light;
-          float a=dns*(l==0?.6:l==1?.88:1.);
-          sky=mix(sky,col,a);
-        }
-        o=vec4(sky,1.);
-      }`;
-    const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(x)); return x; };
-    let prog;
-    try {
-      prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vert)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, frag)); gl.linkProgram(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(prog));
-    } catch (e) { console.warn('LiveQuill sky:', e); return false; }
-    gl.useProgram(prog);
-    gl.bindVertexArray(gl.createVertexArray());
-    const U = k => gl.getUniformLocation(prog, k), uR = U('R'), uT = U('T'), uD = U('D'), uM = U('M');
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, dark = matchMedia('(prefers-color-scheme: dark)');
-    let D = dark.matches ? 1 : 0, mx = 0, my = 0, px = 0, py = 0, last = 0, stopped = false;
-    const SCALE = 0.5;   // nuages flous : la demi-résolution suffit et divise le coût par quatre
-    function resize() {
-      canvas.width = Math.max(1, Math.round(innerWidth * SCALE)); canvas.height = Math.max(1, Math.round(innerHeight * SCALE));
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-    addEventListener('resize', () => { resize(); if (reduced) draw(0, true); }, { passive: true });
-    addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = .5 - e.clientY / innerHeight; }, { passive: true });
-    dark.addEventListener('change', () => { if (reduced) { D = dark.matches ? 1 : 0; draw(0, true); } });
-    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); stopped = true; $('.sky').classList.remove('gl'); cssClouds(); }, { once: true });
-    function draw(t, force) {
-      if (stopped) return;
-      if (force || (!document.hidden && (t - last > 33 || !last))) {
-        last = t || 1;
-        D += ((dark.matches ? 1 : 0) - D) * .06;          // transition douce si le système change de thème
-        px += (mx - px) * .04; py += (my - py) * .04;
-        gl.uniform2f(uR, canvas.width, canvas.height); gl.uniform1f(uT, reduced ? 40 : t * .001 + 40);
-        gl.uniform1f(uD, D); gl.uniform2f(uM, px, py);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-      }
-      if (!reduced) requestAnimationFrame(draw);
-    }
-    resize(); draw(0, true);
-    $('.sky').classList.add('gl');
-    return true;
-  }
-  if (!glSky()) cssClouds();
-
-  async function refresh(recheck = true) {
-    const r = await api('kinds');
-    K = r.kinds; P = r.providers; D = r.default;
-    const onSite = r.mode !== 'hub', any = Object.keys(P).length > 0;
-    if (any) $('#headline').textContent = 'Tes fournisseurs';
-    if (onSite) $('#intro').innerHTML = `Choisis le modèle qui modifiera <code>${esc(r.root)}</code>${r.mode === 'proxy' ? ' (mode proxy)' : ''}. Tu peux en ajouter d’autres et en changer à tout moment depuis la barre.`;
-    $('#go').hidden = !any;
-    $('#go').href = next.startsWith('/') && !next.startsWith('//') ? next : '/';
-    $('#go').textContent = onSite ? 'Retour au site →' : 'Mes sites →';
-    $('#hub').hidden = !(onSite && r.hub_url);
-    if (r.hub_url) $('#hub').href = r.hub_url;
-    if (recheck) status = {};
-    renderCards();
-    if (recheck && any) { status = await api('status').catch(() => ({})); renderCards(); }
-  }
-
-  /* État d'une carte : vérifiée (disponible / erreur), détectée sur la machine, ou à configurer */
-  function detected(kind) {
-    if (!det) return null;
-    if (kind === 'ollama') return det.ollama.up ? `Ollama tourne ici avec ${det.ollama.models.length} modèle(s). Clique pour l’activer.` : null;
-    if (kind === 'lmstudio' || kind === 'llamacpp') return det[kind].up ? 'Serveur détecté sur ce poste. Clique pour l’activer.' : null;
-    if (kind.startsWith('cli-')) {
-      const a = kind.slice(4), via = (det.cli_via || {})[a];
-      if (!det.cli[a]) return null;
-      return via ? `Trouvé dans l’app ${via}, déjà connecté à ton compte. Clique pour l’activer.` : 'Installé sur ce poste. Clique pour l’activer.';
-    }
-    if (K[kind].env && det.env[kind]) return `Clé trouvée dans ${K[kind].env}. Clique pour l’activer.`;
-    return null;
-  }
-  function idle(kind) {
-    const d = K[kind];
-    if (kind === 'custom') return 'N’importe quel serveur compatible OpenAI : vLLM, LocalAI, Jan…';
-    if (d.group === 'cloud') return 'Crée une clé sur le site du fournisseur, puis clique ici.';
-    if (d.group === 'local') return 'Installe-le et lance son serveur, puis clique ici.';
-    return kind === 'cli-claude' ? 'Installe la CLI ou l’app Claude Desktop, puis clique ici.' : kind === 'cli-codex' ? 'Installe la CLI ou l’app ChatGPT, puis clique ici.' : 'Installe la CLI et connecte-toi, puis clique ici.';
-  }
-
-  function cardHtml(kind, pid) {
-    const d = K[kind], p = pid ? P[pid] : null;
-    let st, label, text;
-    if (p) {
-      const s = status[pid], n = (p.models || []).filter(m => m.shown !== false).length;
-      if (!s) { st = 'check'; label = 'Vérification…'; text = 'Connexion en cours au fournisseur.'; }
-      else if (s.ok) { st = 'ok'; label = 'Disponible'; text = `${n} modèle(s) dans la barre · défaut : ${p.default_model}`; }
-      else { st = 'bad'; label = 'Connexion impossible'; text = s.message; }
-    } else {
-      const found = detected(kind);
-      st = found ? 'found' : 'idle';
-      label = found ? 'Détecté' : { cloud: 'Non configuré', local: 'Non détecté', cli: 'Non installé' }[d.group];
-      if (kind === 'custom') label = 'Ajouter';
-      text = found || idle(kind);
-    }
-    const title = p ? (p.label || d.label) : d.label;
-    const isDef = p && D && D.provider === pid;
-    return `<div class="card st-${st} ${kind === 'custom' && !p ? 'add' : ''} ${edit && edit.type === kind && edit.id === (pid || null) ? 'sel' : ''}" role="button" tabindex="0"
-        data-kind="${kind}" data-pid="${esc(pid || '')}" aria-label="${esc(title)} : ${esc(label)}">
-      <div class="kh"><b>${esc(title)}</b><span class="dot" aria-hidden="true"></span></div>
-      <div class="state">${esc(label)}</div>
-      <small>${esc(text)}</small>
-      ${!p && st === 'idle' ? extLink(d) : ''}
-      ${isDef ? '<span class="badge">par défaut</span>' : ''}</div>`;
-  }
-
-  function renderCards() {
-    for (const grid of document.querySelectorAll('.grid')) {
-      const g = grid.dataset.group;
-      let html = '';
-      for (const [k, d] of Object.entries(K)) {
-        if (d.group !== g) continue;
-        const pids = Object.keys(P).filter(id => P[id].type === k);
-        html += pids.map(id => cardHtml(k, id)).join('');
-        if (!pids.length || d.multi) html += cardHtml(k, null);   // « Autre » reste toujours proposé
-      }
-      grid.innerHTML = html;
-    }
-  }
-
-  function field(id, label, type, value, ph) {
-    return `<label for="${id}">${label}</label><input type="${type}" id="${id}" value="${esc(value || '')}" placeholder="${esc(ph || '')}" spellcheck="false">`;
-  }
-
-  function howto(type) {
-    const d = K[type];
-    if (d.group === 'cloud') return `1. ${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">Ouvre la page des clés ${esc(d.label)} ↗</a>` : ''} et connecte-toi.<br>2. Crée une clé, colle-la ci-dessous, puis teste la connexion.`;
-    if (d.group === 'cli') {
-      const via = det && (det.cli_via || {})[type.slice(4)];
-      if (via) return `${esc(d.help)}.<br>LiveQuill utilise l’agent intégré à l’app <b>${esc(via)}</b>, avec le compte de l’app. Pas encore connecté ? Ouvre l’app ${esc(via)} et connecte-toi.`;
-      return `${esc(d.help)}.<br>Pas encore connecté ? Lance <code>${esc(d.login)}</code> dans un terminal. ${extLink(d)}`;
-    }
-    return `${esc(d.help)}. ${extLink(d)}`;
-  }
-
-  /* La carte flottante */
-  function showForm() {
-    lastFocus = document.activeElement;
-    $('#form').hidden = false;
-    $('#overlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function hideForm() {
-    $('#form').hidden = true;
-    $('#overlay').classList.remove('open');
-    document.body.style.overflow = '';
-    edit = null;
-    renderCards();
-    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
-  }
-
-  function openForm(type, id) {
-    const d = K[type], p = id ? P[id] : {};
-    edit = { type, id: id || null };
-    models = id ? (p.models || []).map(m => ({ ...m, shown: m.shown !== false })) : [];
-    edit.default = id ? p.default_model : null;
-    $('#f-kind').textContent = GROUP[d.group];
-    $('#f-kind').style.color = `var(--${{ local: 'local', cloud: 'cloudc', cli: 'cli' }[d.group]})`;
-    $('#f-title').textContent = (id ? 'Modifier · ' + (p.label || d.label) : d.label + (type === 'custom' ? ' · compatible OpenAI' : ''));
-    $('#f-howto').innerHTML = howto(type);
-    $('#f-label').value = p.label || '';
-    let f = '';
-    if (d.fields.includes('base_url')) f += field('f-base', 'URL de base', 'url', p.base_url, BASES[type] || '');
-    if (d.fields.includes('key')) {
-      f += field('f-key', `Clé API${type === 'custom' ? ' (facultative)' : ''}`, 'password', '', p.has_key ? '•••••••• enregistrée — laisser vide pour la garder' : 'colle ta clé ici');
-      if (d.env && det && det.env[type]) f += `<div class="check"><input type="checkbox" id="f-env" ${p.api_key_env || !id ? 'checked' : ''}><label for="f-env">Utiliser la variable d’environnement <code>${esc(d.env)}</code></label></div>`;
-    }
-    if (d.fields.includes('model')) f += field('f-model', 'Nom du modèle (si le serveur ne liste pas ses modèles)', 'text', p.model, 'ex. llama-3.3-70b');
-    if (d.fields.includes('num_ctx')) f += field('f-ctx', 'Taille du contexte (num_ctx)', 'number', p.num_ctx || 16384, '16384');
-    if (d.fields.includes('extra_models')) f += field('f-extra', 'Modèles en plus (séparés par des virgules, facultatif)', 'text', p.extra_models, type === 'cli-codex' ? 'ex. gpt-5.5, o4-mini' : 'ex. claude-opus-5-5');
-    $('#f-fields').innerHTML = f;
-    $('#f-adv').hidden = d.group === 'cli';
-    $('#f-adv').open = false;
-    $('#f-toolmode').value = p.tool_mode || '';
-    $('#f-vision').checked = !!(p.caps && p.caps.vision);
-    $('#f-default').checked = !Object.keys(P).length || (D && D.provider === id);
-    $('#f-delete').hidden = !id;
-    $('#f-msg').textContent = ''; $('#f-msg').className = 'msg';
-    $('#f-filter').value = '';
-    showForm();
-    renderModels(); renderCards();
-    $('#form').scrollTop = 0;
-    // Détecté sur la machine (ou déjà configuré) : on teste tout de suite, un clic de moins
-    if (id || detected(type)) $('#f-test').click(); else (($('#f-key') || $('#f-base') || $('#f-label')).focus());
-  }
-
-  function formBody() {
-    const v = s => { const el = $(s); return el ? el.value.trim() : ''; };
-    const b = { id: edit.id, type: edit.type, label: v('#f-label'), base_url: v('#f-base'), api_key: v('#f-key'), model: v('#f-model'),
-      extra_models: v('#f-extra'), num_ctx: v('#f-ctx') ? +v('#f-ctx') : '', tool_mode: $('#f-toolmode').value };
-    if ($('#f-env') && $('#f-env').checked) { b.api_key_env = K[edit.type].env; b.api_key = ''; }
-    if ($('#f-vision').checked) b.caps = { vision: true };
-    return b;
-  }
-
-  function renderModels() {
-    const box = $('#f-models'), q = $('#f-filter').value.toLowerCase();
-    $('#f-save').disabled = !models.length;
-    box.hidden = !models.length; $('#f-filter').hidden = models.length < 12;
-    if (!edit.default || !models.some(m => m.id === edit.default)) edit.default = (models.find(m => m.shown) || models[0] || {}).id;
-    box.innerHTML = models.map((m, i) => (q && !(m.id + m.label).toLowerCase().includes(q)) ? '' :
-      `<div class="m"><input type="checkbox" data-i="${i}" ${m.shown ? 'checked' : ''} aria-label="Afficher ${esc(m.label)} dans la barre">
-        <span>${esc(m.label)} ${m.label.startsWith(m.id) ? '' : `<small>${esc(m.id)}</small>`}</span>
-        <small>${[m.caps && m.caps.tools === false ? 'sans tools → mode texte' : '', m.caps && m.caps.vision ? 'vision' : '', m.caps && m.caps.effort ? 'réflexion' : '', m.caps && m.caps.fast ? 'fast' : ''].filter(Boolean).join(' · ')}</small>
-        <label class="def"><input type="radio" name="def" data-i="${i}" ${m.id === edit.default ? 'checked' : ''}>défaut</label></div>`).join('');
-  }
-
-  $('#f-models').addEventListener('change', e => {
-    const i = +e.target.dataset.i;
-    if (e.target.type === 'checkbox') models[i].shown = e.target.checked;
-    else { edit.default = models[i].id; models[i].shown = true; }
-    renderModels();
-  });
-  $('#f-filter').addEventListener('input', renderModels);
-
-  $('#f-test').addEventListener('click', async () => {
-    const btn = $('#f-test'), msg = $('#f-msg');
-    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Test en cours…';
-    try {
-      const r = await api('providers/test', formBody());
-      msg.className = 'msg ' + (r.ok ? 'ok' : 'bad'); msg.textContent = (r.ok ? '✓ Disponible · ' : '✗ ') + r.message;
-      if (r.ok) {
-        const prev = Object.fromEntries(models.map(m => [m.id, m.shown]));
-        const few = r.models.length <= 12;
-        models = r.models.map(m => ({ ...m, shown: m.id in prev ? prev[m.id] : few }));
-        if (!models.some(m => m.shown) && models.length) {
-          const pref = models.find(m => /qwen2\.5|qwen3|llama3\.[123]|opus-5-5|gpt-5|gemini-2\.5-flash|mistral-large|default/.test(m.id)) || models[0];
-          pref.shown = true; edit.default = pref.id;
-        }
-        renderModels();
-      }
-    } catch (e) { msg.className = 'msg bad'; msg.textContent = '✗ ' + e.message; }
-    btn.disabled = false;
-  });
-
-  $('#form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const msg = $('#f-msg');
-    const first = !Object.keys(P).length;
-    const body = { ...formBody(), models: models.map(({ id, label, meta, shown }) => ({ id, label, meta, shown })), default_model: edit.default,
-      make_default: $('#f-default').checked };
-    try {
-      const r = await api('providers/save', body);
-      if (!r.ok) throw new Error(r.message);
-      hideForm();
-      await refresh();
-      // Premier fournisseur enregistré : on enchaîne directement sur la page des sites (ou le site)
-      if (first) { location.href = $('#go').href; return; }
-      $('#go').focus();
-    } catch (err) { msg.className = 'msg bad'; msg.textContent = '✗ ' + err.message; }
-  });
-  $('#f-cancel').addEventListener('click', hideForm);
-  $('#f-x').addEventListener('click', hideForm);
-  $('#overlay').addEventListener('mousedown', e => { if (e.target === e.currentTarget) hideForm(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#form').hidden) hideForm(); });
-  $('#f-delete').addEventListener('click', async () => {
-    if (!edit.id || !confirm('Supprimer ce fournisseur (et sa clé) ?')) return;
-    await api('providers/delete', { id: edit.id });
-    hideForm(); refresh();
-  });
-
-  const pick = e => {
-    if (e.target.closest('a')) return;             // le lien « Créer une clé ↗ » s'ouvre sans ouvrir le formulaire
-    const c = e.target.closest('.card'); if (!c) return;
-    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    openForm(c.dataset.kind, c.dataset.pid || null);
-  };
-  for (const g of document.querySelectorAll('.grid')) { g.addEventListener('click', pick); g.addEventListener('keydown', pick); }
-
-  api('detect').then(d => { det = d; renderCards(); }).catch(() => {});
-  refresh().catch(e => { $('#intro').textContent = e.message; });
+  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
+  for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.textContent);
+  document.title = 'LiveQuill · ' + t('Welcome');
+  $('#brand').innerHTML = logo + 'LiveQuill';
+  langMenu($('#lang'));
+  $('#keys').innerHTML = '🔒 ' + t('Keys stay on this computer, in {path} (permissions 600), and never go through the browser.', { path: '<code>~/.config/livequill/config.json</code>' });
+  $('#steps').innerHTML = [t('Choose a model'), t('Create or open your site')].map((s, i) => `<span class="${i ? '' : 'on'}"><i>${i + 1}</i>${esc(s)}</span>`).join('');
+  const grids = Object.fromEntries([...document.querySelectorAll('.pgrid')].map(g => [g.dataset.group, g]));
+  // Premier fournisseur enregistré : on enchaîne sur le site demandé ou sur la page des sites
+  providers.mount({ grids, onSaved: () => { location.href = safeNext; } })
+    .catch(e => { $('#intro').textContent = e.message; });
 })();
 </script>
 </body>

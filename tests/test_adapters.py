@@ -228,10 +228,10 @@ class CLI(unittest.TestCase):
         with mock.patch.dict(os.environ, {'PATH': '/nonexistent', 'HOME': home}), mock.patch.object(cli, 'EXTRA_DIRS', []):
             self.assertEqual(cli.locate('claude'), (new, 'Claude Desktop'))       # 2.1.10 > 2.1.9
             msg, models = cli.CLIAdapter({'command': 'claude'}).test()
-            self.assertIn('via l’app Claude Desktop', msg)
+            self.assertIn('through the Claude Desktop app', msg)
             self.assertEqual(cli.CLIAdapter({'command': 'claude'}).command('/p', 'haiku', {}, [])[0], new)
             fake(new, 'false')
-            with self.assertRaisesRegex(RuntimeError, 'ouvre l’application Claude Desktop'):
+            with self.assertRaisesRegex(RuntimeError, 'open the Claude Desktop app'):
                 cli.CLIAdapter({'command': 'claude'}).test()
 
     def test_parsers(self):

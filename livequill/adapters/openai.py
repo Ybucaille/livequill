@@ -71,7 +71,7 @@ class OpenAIAdapter(Adapter):
         for m in messages:
             if m['role'] == 'tool':
                 for r in m['results']:
-                    out.append({'role': 'tool', 'tool_call_id': r['id'], 'content': r['content'] or '(vide)'})
+                    out.append({'role': 'tool', 'tool_call_id': r['id'], 'content': r['content'] or '(empty)'})
                 continue
             parts = m['content']
             if m['role'] == 'assistant':

@@ -43,7 +43,7 @@ class OllamaAdapter(Adapter):
         for m in messages:
             if m['role'] == 'tool':
                 for r in m['results']:
-                    out.append({'role': 'tool', 'content': r['content'] or '(vide)', 'tool_name': r['name']})
+                    out.append({'role': 'tool', 'content': r['content'] or '(empty)', 'tool_name': r['name']})
                 continue
             parts = m['content']
             msg = {'role': m['role'], 'content': '\n\n'.join(p['text'] for p in parts if p['type'] == 'text')}

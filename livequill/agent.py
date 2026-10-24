@@ -180,7 +180,7 @@ def decode_attachments(project, files):
     up = os.path.join(project.work, 'uploads')
     os.makedirs(up, exist_ok=True)
     for i, f in enumerate(files):
-        name = re.sub(r'[^\w.-]+', '_', os.path.basename(str(f.get('name') or 'fichier')))[:80] or 'fichier'
+        name = re.sub(r'[^\w.-]+', '_', os.path.basename(str(f.get('name') or 'file')))[:80] or 'file'
         raw = str(f.get('data', ''))
         mime = str(f.get('type') or 'application/octet-stream')
         m = re.match(r'data:([^;,]+)?(;base64)?,', raw)
@@ -204,7 +204,7 @@ def attachment_parts(atts, vision):
         try:
             txt = a['bytes'].decode('utf-8')
             if len(txt) > MAX_TEXT_ATTACHMENT:
-                txt = txt[:MAX_TEXT_ATTACHMENT] + '\n…[tronqué]'
+                txt = txt[:MAX_TEXT_ATTACHMENT] + '\n…[truncated]'
             notes.append(f'- {a["name"]} (text):\n```\n{txt}\n```')
         except UnicodeDecodeError:
             notes.append(f'- {a["name"]} ({a["mime"]}, {len(a["bytes"])} bytes — not viewable by you, but save_attachment can copy it into the project)')
@@ -262,7 +262,7 @@ def run(ctx, job):
     req, project = job.req, ctx.project
     conf = ctx.config.get(req['provider'])
     if not conf:
-        raise RuntimeError('Fournisseur inconnu : reconfigure-le dans les réglages')
+        raise RuntimeError('Unknown provider: set it up again in the settings')
     ad = adapters.make(conf, getattr(ctx, 'transport', None))
     model = req['model']
     meta = next((m.get('meta') for m in conf.get('models', []) if m['id'] == model), None)
@@ -338,19 +338,19 @@ def run_api(ctx, job, ad, model, opts, caps, atts, tx, conf):
             if text_mode:
                 raise
             text_mode = True
-            job.emit({'type': 'info', 'text': 'Ce modèle ne gère pas les tool calls : passage en mode texte.'})
+            job.emit({'type': 'info', 'text': 'This model does not support tool calls: switching to text mode.'})
             continue
         if job.cancelled:
             raise Cancelled()
         messages.append({'role': 'assistant', 'content': parts or [{'type': 'text', 'text': ''}]})
         if stop == 'refusal':
-            raise RuntimeError('Le modèle a refusé la demande.')
+            raise RuntimeError('The model refused the request.')
         text = text_of(parts)
         calls = [p for p in parts if p['type'] == 'tool_call']
         if not text_mode and not calls and parse_text_calls(text)[0]:
             # Petit modèle qui écrit ses appels en texte (« {"name": …} </tool_call> ») : on passe au protocole texte
             text_mode = True
-            job.emit({'type': 'info', 'text': 'Appel d’outil écrit en texte : passage en mode texte.'})
+            job.emit({'type': 'info', 'text': 'Tool call written as text: switching to text mode.'})
         if text_mode:
             calls, text = parse_text_calls(text)
             edits = SR_BLOCK.findall(text)
@@ -371,7 +371,7 @@ def run_api(ctx, job, ad, model, opts, caps, atts, tx, conf):
                 results.append(f'Result of {c["name"]}{" (ERROR)" if err else ""}:\n{out}')
                 job.emit({'type': 'tool_result', 'ok': not err, 'summary': first_line(out)})
             if not calls:      # que des SEARCH/REPLACE : c'est la réponse finale
-                answer = SR_STRIP.sub('', text).strip() or 'Modification appliquée.'
+                answer = SR_STRIP.sub('', text).strip() or 'Change applied.'
                 job.emit({'type': 'tool_result', 'ok': True, 'summary': '; '.join(results)})
                 break
             messages.append({'role': 'user', 'content': [{'type': 'text', 'text': '\n\n'.join(results)}]})
@@ -379,7 +379,7 @@ def run_api(ctx, job, ad, model, opts, caps, atts, tx, conf):
             continue
         if not calls:
             if stop == 'max_tokens':
-                raise RuntimeError('Réponse coupée : limite de tokens atteinte.')
+                raise RuntimeError('Answer cut off: token limit reached.')
             if not text.strip() and not tx.files and not nudged:
                 nudged = True      # petit modèle qui s'arrête en route : une relance, une seule
                 messages.append({'role': 'user', 'content': [{'type': 'text', 'text': NUDGE}]})
@@ -396,7 +396,7 @@ def run_api(ctx, job, ad, model, opts, caps, atts, tx, conf):
         if text:
             job.emit({'type': 'text', 'text': '\n'})
     else:
-        answer = f'Arrêt après {MAX_STEPS} étapes.'
+        answer = f'Stopped after {MAX_STEPS} steps.'
     return answer.strip()
 
 
@@ -443,4 +443,4 @@ def first_line(s):
 
 
 def truncate(s, n=60_000):
-    return s if len(s) <= n else s[:n] + '\n…[résultat tronqué]'
+    return s if len(s) <= n else s[:n] + '\n…[result truncated]'

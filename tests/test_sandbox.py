@@ -76,13 +76,13 @@ class FileTools(unittest.TestCase):
 
     def test_search_through_tags(self):
         self.assertIn('index.html:2:', self.p.search('Cluster overview'))
-        self.assertEqual(self.p.search('nope'), '(aucun résultat)')
+        self.assertEqual(self.p.search('nope'), '(no results)')
 
     def test_read_truncates_long_lines(self):
         with open(os.path.join(self.root, 'big.css'), 'w') as f:
             f.write('a{}\n' + 'x' * 5000 + '\nb{}\n')
         out = self.p.read_file('big.css')
-        self.assertIn('ligne tronquée', out)
+        self.assertIn('line truncated', out)
         self.assertLess(len(out), 1000)
 
 

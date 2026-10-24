@@ -74,22 +74,22 @@ class Project:
     def resolve(self, rel, allow_root=False):
         """Chemin relatif du modèle -> chemin absolu sûr, sinon PathError."""
         if not isinstance(rel, str) or '\0' in rel:
-            raise PathError('chemin invalide')
+            raise PathError('invalid path')
         rel = rel.strip().replace('\\', '/')
         if rel.startswith(('/', '~')) or re.match(r'^[A-Za-z]:', rel):
-            raise PathError(f'chemin absolu refusé : {rel}')
+            raise PathError(f'absolute path refused: {rel}')
         parts = [p for p in rel.split('/') if p not in ('', '.')]
         if '..' in parts:
-            raise PathError(f'« .. » refusé : {rel}')
+            raise PathError(f'“..” refused: {rel}')
         if not parts and not allow_root:
-            raise PathError('chemin vide')
+            raise PathError('empty path')
         if denied(parts):
-            raise PathError(f'accès interdit : {rel}')
+            raise PathError(f'access denied: {rel}')
         real = os.path.realpath(os.path.join(self.root, *parts))
         if real != self.root and not real.startswith(self.root + os.sep):
-            raise PathError(f'sort du projet (lien symbolique ?) : {rel}')
+            raise PathError(f'outside the project (symbolic link?): {rel}')
         if real != self.root and denied(os.path.relpath(real, self.root).split(os.sep)):
-            raise PathError(f'accès interdit : {rel}')
+            raise PathError(f'access denied: {rel}')
         return real
 
     def rel(self, path):
@@ -99,7 +99,7 @@ class Project:
         """Ouvre un fichier du projet (chemin déjà vérifié par resolve) sans suivre aucun lien symbolique."""
         parts = os.path.relpath(full, self.root).split(os.sep)
         if parts == ['.'] or '..' in parts:
-            raise PathError(f'chemin invalide : {full}')
+            raise PathError(f'invalid path: {full}')
         flags = os.O_RDONLY if mode.startswith('r') else os.O_WRONLY | os.O_CREAT | os.O_TRUNC
         try:
             pfd = _parent_fd(self.root, parts, create=create_dirs)
@@ -109,7 +109,7 @@ class Project:
                 os.close(pfd)
         except OSError as e:
             if e.errno in (errno.ELOOP, errno.ENOTDIR, errno.EMLINK):
-                raise PathError(f'lien symbolique refusé : {self.rel(full)}') from None
+                raise PathError(f'symbolic link refused: {self.rel(full)}') from None
             raise
         return os.fdopen(fd, mode, **kw)
 
@@ -135,16 +135,16 @@ class Project:
             r = self.rel(p)
             if pattern and not fnmatch.fnmatch(r, pattern) and not fnmatch.fnmatch(os.path.basename(r), pattern):
                 continue
-            out.append(f'{r} ({os.path.getsize(p)} o)')
+            out.append(f'{r} ({os.path.getsize(p)} B)')
             if len(out) >= limit:
-                out.append(f'… (liste tronquée à {limit})')
+                out.append(f'… (list truncated to {limit})')
                 break
-        return '\n'.join(out) or '(aucun fichier)'
+        return '\n'.join(out) or '(no files)'
 
     def read_file(self, path, offset=1, limit=MAX_READ_LINES):
         full = self.resolve(path)
         if not os.path.isfile(full):
-            raise PathError(f'fichier introuvable : {path}')
+            raise PathError(f'file not found: {path}')
         with self.open(full, 'r', encoding='utf-8', errors='replace') as f:
             lines = f.read().split('\n')
         offset = max(1, int(offset or 1))
@@ -152,16 +152,16 @@ class Project:
         chunk = lines[offset - 1: offset - 1 + limit]
         body = []
         for ln in chunk:
-            body.append(ln if len(ln) <= MAX_LINE else ln[:MAX_LINE] + f' …[ligne tronquée, {len(ln)} caractères]')
+            body.append(ln if len(ln) <= MAX_LINE else ln[:MAX_LINE] + f' …[line truncated, {len(ln)} characters]')
         end = offset + len(chunk) - 1
-        head = f'[{path} — lignes {offset}-{end} sur {len(lines)}]'
+        head = f'[{path}, lines {offset}-{end} of {len(lines)}]'
         if end < len(lines):
-            head += f' (suite avec offset={end + 1})'
+            head += f' (continue with offset={end + 1})'
         return head + '\n' + '\n'.join(body)
 
     def search(self, pattern, path='.', regex=False, glob=None):
         if not pattern:
-            raise PathError('motif vide')
+            raise PathError('empty pattern')
         rx = re.compile(pattern if regex else re.escape(pattern), re.IGNORECASE)
         out = self._search(rx, path, glob, strip=False)
         if out:
@@ -173,7 +173,7 @@ class Project:
                 out = self._search(re.compile(pattern, re.IGNORECASE), path, glob, strip=False)
             except re.error:
                 pass
-        return out or '(aucun résultat)'
+        return out or '(no results)'
 
     def _search(self, rx, path, glob, strip):
         hits = []
@@ -196,7 +196,7 @@ class Project:
                                 ln = ('…' if s else '') + ln[s:s + 300] + '…'
                             hits.append(f'{r}:{i}: {ln}')
                             if len(hits) >= MAX_SEARCH:
-                                return '\n'.join(hits) + f'\n… (limité à {MAX_SEARCH} résultats)'
+                                return '\n'.join(hits) + f'\n… (limited to {MAX_SEARCH} results)'
             except (UnicodeDecodeError, OSError):
                 continue
         return '\n'.join(hits)
@@ -204,47 +204,47 @@ class Project:
     def write_file(self, path, content, tx=None):
         full = self.resolve(path)
         if os.path.isdir(full):
-            raise PathError(f'{path} est un dossier')
+            raise PathError(f'{path} is a folder')
         if tx:
             tx.backup(full)
         existed = os.path.exists(full)
         with self.open(full, 'w', create_dirs=True, encoding='utf-8', newline='') as f:
             f.write(content)
-        return f'{"Réécrit" if existed else "Créé"} : {path} ({len(content)} caractères)'
+        return f'{"Rewritten" if existed else "Created"}: {path} ({len(content)} characters)'
 
     def write_bytes(self, path, data, tx=None):
         full = self.resolve(path)
         if os.path.isdir(full):
-            raise PathError(f'{path} est un dossier')
+            raise PathError(f'{path} is a folder')
         if tx:
             tx.backup(full)
         with self.open(full, 'wb', create_dirs=True) as f:
             f.write(data)
-        return f'Copié : {path}'
+        return f'Copied: {path}'
 
     def edit_file(self, path, old_text, new_text, replace_all=False, tx=None):
         full = self.resolve(path)
         if not os.path.isfile(full):
-            raise PathError(f'fichier introuvable : {path}')
+            raise PathError(f'file not found: {path}')
         if not old_text:
-            raise PathError('old_text est vide')
+            raise PathError('old_text is empty')
         with self.open(full, 'r', encoding='utf-8', newline='') as f:
             src = f.read()
         n = src.count(old_text)
         if n == 1 or (n > 1 and replace_all):
             out = src.replace(old_text, new_text) if replace_all else src.replace(old_text, new_text, 1)
         elif n > 1:
-            raise PathError(f'old_text apparaît {n} fois dans {path} : ajoute du contexte pour qu’il soit unique, ou replace_all=true')
+            raise PathError(f'old_text appears {n} times in {path}: add context to make it unique, or use replace_all=true')
         else:
             span = fuzzy_span(src, old_text)
             if not span:
-                raise PathError(f'old_text introuvable dans {path} : relis le fichier et copie le texte exact')
+                raise PathError(f'old_text not found in {path}: read the file again and copy the exact text')
             out = src[:span[0]] + reindent(new_text, src[span[0]:span[1]], old_text) + src[span[1]:]
         if tx:
             tx.backup(full)
         with self.open(full, 'w', encoding='utf-8', newline='') as f:
             f.write(out)
-        return f'Modifié : {path}'
+        return f'Edited: {path}'
 
 
 def fuzzy_span(src, old):
@@ -384,7 +384,7 @@ class HistoryStore:
         elif version in names:
             later = names[names.index(version) + 1:]
         else:
-            raise PathError('version inconnue')
+            raise PathError('unknown version')
         for name in later:
             for e in self.manifest(name)['files']:
                 if e['path'] == rel:
@@ -396,7 +396,7 @@ class HistoryStore:
     def restore_to(self, version):
         """Revient à une version en annulant une à une les demandes plus récentes. Renvoie les annulations faites."""
         if version != 'origin' and version not in self.entries():
-            raise PathError('version inconnue')
+            raise PathError('unknown version')
         done = []
         while self.entries() and self.entries()[-1] != version:
             done.append(self.undo())
@@ -407,7 +407,7 @@ class HistoryStore:
         supprimé, jamais suivi : rien ne peut être écrit hors du projet."""
         parts = [x for x in e['path'].split('/') if x not in ('', '.')]
         if not parts or '..' in parts or e['path'].startswith('/') or parts[0] in ('.git', WORKDIR):
-            raise PathError(f'chemin invalide dans l’historique : {e["path"]}')
+            raise PathError(f'invalid path in the history: {e["path"]}')
         pfd = _parent_fd(self.project.root, parts, create=True, replace_links=True)
         name = parts[-1]
         try:
@@ -415,7 +415,7 @@ class HistoryStore:
                 if stat.S_ISDIR(os.stat(name, dir_fd=pfd, follow_symlinks=False).st_mode):
                     if e['blob'] is None and 'link' not in e:
                         return                      # un dossier créé par l'agent : laissé tel quel
-                    raise PathError(f'un dossier occupe la place de {e["path"]}')
+                    raise PathError(f'a folder is in the way of {e["path"]}')
                 os.unlink(name, dir_fd=pfd)
             except FileNotFoundError:
                 pass
@@ -447,7 +447,7 @@ class HistoryStore:
                 except (OSError, PathError) as ex:
                     errors.append(f'{e["path"]} ({ex})')
             if errors:
-                raise PathError('annulation incomplète : ' + ', '.join(errors))
+                raise PathError('undo incomplete: ' + ', '.join(errors))
             done = _private_dir(os.path.join(self.project.work, 'undone'))
             shutil.move(d, os.path.join(done, entries[-1]))
             return man['job'], restored
@@ -491,8 +491,8 @@ class Snapshot:
         self.state = _scan(project)
         total = sum(st.st_size for st in self.state.values() if stat.S_ISREG(st.st_mode))
         if total > SNAPSHOT_MAX:
-            raise SnapshotTooLarge(f'projet trop volumineux pour garantir l’annulation : {total // 1_000_000} Mo hors .git et '
-                                   f'node_modules (limite {SNAPSHOT_MAX // 1_000_000} Mo)')
+            raise SnapshotTooLarge(f'project too large to guarantee undo: {total // 1_000_000} MB outside .git and '
+                                   f'node_modules (limit {SNAPSHOT_MAX // 1_000_000} MB)')
         ensure_workdir(project)
         self.dir = _private_dir(os.path.join(project.work, 'tmp', f'snap-{uuid.uuid4().hex[:8]}'))
         self.copies = {}

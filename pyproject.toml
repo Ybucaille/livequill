@@ -18,7 +18,7 @@ build-backend = "setuptools.build_meta"
 packages = ["livequill", "livequill.adapters"]
 
 [tool.setuptools.package-data]
-livequill = ["static/*"]
+livequill = ["static/*", "static/i18n/*", "templates/*/*"]
 
 [tool.ruff]
 target-version = "py310"

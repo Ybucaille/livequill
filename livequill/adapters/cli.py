@@ -7,10 +7,10 @@ import glob, json, os, re, shutil, subprocess
 from .base import Adapter, levels
 
 AGENTS = {
-    'claude': {'label': 'Claude Code', 'models': [('default', 'Par défaut (Claude Code)'), ('opus', 'Opus'), ('sonnet', 'Sonnet'), ('haiku', 'Haiku')],
+    'claude': {'label': 'Claude Code', 'models': [('default', 'Default (Claude Code)'), ('opus', 'Opus'), ('sonnet', 'Sonnet'), ('haiku', 'Haiku')],
                'effort': levels('low', 'medium', 'high', 'xhigh', 'max')},
-    'codex': {'label': 'Codex', 'models': [('default', 'Par défaut (Codex)')], 'effort': levels('low', 'medium', 'high')},
-    'gemini': {'label': 'Gemini CLI', 'models': [('default', 'Par défaut (Gemini CLI)')], 'effort': None},
+    'codex': {'label': 'Codex', 'models': [('default', 'Default (Codex)')], 'effort': levels('low', 'medium', 'high')},
+    'gemini': {'label': 'Gemini CLI', 'models': [('default', 'Default (Gemini CLI)')], 'effort': None},
 }
 
 
@@ -118,14 +118,14 @@ class CLIAdapter(Adapter):
         exe, app = locate(self.agent)
         label = AGENTS[self.agent]['label']
         if not exe:
-            raise RuntimeError(f'« {self.agent} » est introuvable : installe la CLI, ou l’application '
-                               f'{"Claude Desktop" if self.agent == "claude" else "ChatGPT" if self.agent == "codex" else "officielle"}')
+            raise RuntimeError(f'“{self.agent}” was not found: install the CLI, or the '
+                               f'{"Claude Desktop" if self.agent == "claude" else "ChatGPT" if self.agent == "codex" else "official"} app')
         if logged_in(self.agent, exe) is False:
-            how = f'ouvre l’application {app} et connecte-toi' if app else ('lance « claude auth login »' if self.agent == 'claude' else 'lance « codex login »')
-            raise RuntimeError(f'{label} n’est pas connecté à ton compte : {how}, puis reteste')
+            how = f'open the {app} app and sign in' if app else ('run “claude auth login”' if self.agent == 'claude' else 'run “codex login”')
+            raise RuntimeError(f'{label} is not signed in to your account: {how}, then test again')
         out = subprocess.run([exe, '--version'], capture_output=True, text=True, timeout=20)
         version = (out.stdout or out.stderr).strip()[:80]
-        return f'{label} trouvé{f" (via l’app {app})" if app else ""} : {version}', self.list_models()
+        return f'{label} found{f" (through the {app} app)" if app else ""}: {version}', self.list_models()
 
     def command(self, root, model, opts, images, prompt=''):
         """-> (argv, texte envoyé sur stdin). Le prompt passe par stdin : pas de limite de taille d'argument."""
@@ -188,7 +188,7 @@ class CLIAdapter(Adapter):
         err = p.stderr.read()
         code = p.wait()
         if code and not job.cancelled:
-            raise RuntimeError(f'{self.agent} a échoué (code {code}) : {err.strip()[-600:]}')
+            raise RuntimeError(f'{self.agent} failed (code {code}): {err.strip()[-600:]}')
         return ''.join(final).strip()
 
     def parse_line(self, ln):

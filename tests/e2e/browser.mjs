@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Parcours navigateur réel : un Chromium headless ouvre un site servi par LiveQuill, tape une demande dans la barre,
-// attend le rechargement automatique, vérifie la page, clique sur « Annuler » et vérifie le retour à l'état d'origine.
+// attend le rechargement automatique, vérifie la page, clique sur « Annuler » et vérifie le retour à l'état d'origine,
+// passe par les versions, puis crée un nouveau site depuis le tableau de bord.
 // Le modèle est un petit serveur compatible OpenAI lancé ici même. Aucune dépendance npm.
 //
 //   node tests/e2e/browser.mjs [--chromium /chemin/vers/chrome]
@@ -55,8 +56,9 @@ execFileSync('mkdir', ['-p', site]);
 writeFileSync(join(site, 'index.html'), PAGE);
 writeFileSync(join(work, 'config.json'), JSON.stringify({
   providers: { custom: { type: 'custom', base_url: `http://127.0.0.1:${model.address().port}/v1`, models: [{ id: 'fake-model', label: 'fake' }], default_model: 'fake-model' } },
-  default: { provider: 'custom', model: 'fake-model' }, sites: [],
+  default: { provider: 'custom', model: 'fake-model' }, sites: [], sites_dir: join(work, 'sites'),
 }));
+execFileSync('mkdir', ['-p', join(work, 'sites')]);
 
 let lq, chrome;
 function cleanup() {
@@ -69,9 +71,14 @@ const timer = setTimeout(() => fail('délai dépassé (90 s)'), 90_000);
 
 lq = spawn('python3', [join(REPO, 'bin/livequill'), site, '--port', String(18000 + Math.floor(Math.random() * 1000)), '--no-open', '--config', join(work, 'config.json')],
   { env: { ...process.env, PYTHONUNBUFFERED: '1', LIVEQUILL_QUIET: '1' } });
+let hubUrl;
 const siteUrl = await new Promise((res, rej) => {
   let out = '';
-  lq.stdout.on('data', d => { out += d; const m = out.match(/site\s+: (http:\/\/127\.0\.0\.1:\d+\/)/); if (m) res(m[1]); });
+  lq.stdout.on('data', d => {
+    out += d;
+    const h = out.match(/dashboard\s+: (http:\/\/127\.0\.0\.1:\d+\/)/); if (h) hubUrl = h[1];
+    const m = out.match(/site\s+: (http:\/\/127\.0\.0\.1:\d+\/)/); if (m) res(m[1]);
+  });
   lq.on('exit', c => rej(new Error('livequill s’est arrêté : ' + c + '\n' + out)));
 }).catch(e => fail(e.message));
 
@@ -101,7 +108,7 @@ const h1 = () => js(`document.querySelector('h1')?.textContent`);
 await cdp('Page.enable');
 await cdp('Page.navigate', { url: siteUrl });
 await until('la barre flottante', () => js(`!!${bar('textarea')}`));
-await until('les modèles chargés', () => js(`!${bar('.send')}.disabled || ${bar('.dd-btn span')}.textContent !== 'Chargement…'`));
+await until('les modèles chargés', () => js(`!${bar('.send')}.disabled || ${bar('.dd-btn span')}.textContent !== 'Loading…'`));
 console.log('✓ barre affichée sur', siteUrl);
 
 // 1. demande → édition → rechargement automatique
@@ -124,7 +131,7 @@ if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le fichier n�
 console.log('✓ annulation appliquée, fichier identique à l’original');
 
 // 3. Nouvelle modification → Versions : aperçu vivant de l'état d'origine → « Revenir à cette version »
-await until('la barre après rechargement', () => js(`!!${bar('textarea')} && ${bar('.dd-btn span')}.textContent !== 'Chargement…'`));
+await until('la barre après rechargement', () => js(`!!${bar('textarea')} && ${bar('.dd-btn span')}.textContent !== 'Loading…'`));
 await js(`(() => { const t = ${bar('textarea')}; t.focus(); t.value = 'change le titre'; t.dispatchEvent(new Event('input')); })()`);
 const beforeSecond = loaded;
 for (const type of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
@@ -146,6 +153,27 @@ await until('le rechargement après le retour de version', async () => loaded > 
 await until('le titre de la version d’origine', async () => (await h1()) === 'Hello');
 if (readFileSync(join(site, 'index.html'), 'utf8') !== PAGE) fail('le retour de version n’a pas rétabli le fichier à l’identique');
 console.log('✓ retour à la version d’origine');
+
+// 4. Tableau de bord : l'assistant « New site » crée un site à partir du modèle d'entreprise
+await cdp('Page.navigate', { url: hubUrl });
+const q = s => `document.querySelector(${JSON.stringify(s)})`;
+await until('le tableau de bord', () => js(`!!${q('#new')} && document.querySelectorAll('.scard').length === 1`));
+await js(`${q('#new')}.click()`);
+await until('le premier écran de l’assistant', () => js(`!!${q('[data-choice=create]')}`));
+await js(`${q('[data-choice=create]')}.click()`);
+await until('le choix du type de site', () => js(`!!${q('[data-choice=dynamic]')} && ${q('[data-choice=dynamic]')}.disabled`));
+await js(`${q('#wz-foot [data-next]')}.click()`);
+await until('les modèles de site', () => js(`!!${q('[data-choice=business]')}`));
+await js(`${q('[data-choice=business]')}.click(); ${q('#wz-foot [data-next]')}.click()`);
+await until('le champ du nom', () => js(`!!${q('#wz-name')}`));
+await js(`(() => { const i = ${q('#wz-name')}; i.value = 'Acme Bakery'; i.dispatchEvent(new Event('input')); })()`);
+await until('le dossier proposé', () => js(`(${q('#wz-where')}.textContent || '').endsWith('acme-bakery')`));
+await js(`${q('#wz-foot [data-next]')}.click()`);
+await until('l’écran « site prêt »', () => js(`!!${q('.done')}`));
+const created = join(work, 'sites', 'acme-bakery', 'index.html');
+if (!existsSync(created) || !readFileSync(created, 'utf8').includes('Acme Bakery')) fail('le site n’a pas été créé à partir du modèle');
+await until('la carte du nouveau site', () => js(`document.querySelectorAll('.scard').length === 2`));
+console.log('✓ nouveau site créé depuis le tableau de bord');
 
 clearTimeout(timer);
 ws.close();
