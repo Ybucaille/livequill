@@ -18,9 +18,10 @@ const PAGE = '<!doctype html><html><body><h1 class="t">Hello</h1></body></html>'
 const fail = msg => { console.error('✗ ' + msg); cleanup(); process.exit(1); };
 
 function chromium() {
-  const given = arg('chromium', process.env.CHROME);
+  const given = arg('chromium', process.env.CHROME || process.env.CHROME_BIN);
   if (given) return given;
-  for (const c of ['chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable']) {
+  // Chrome d'abord : sur Ubuntu, « chromium » peut n'être qu'un raccourci vers un paquet snap qui ne démarre pas en headless
+  for (const c of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
     try { execFileSync('which', [c], { stdio: 'ignore' }); return c; } catch {}
   }
   const mac = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -71,10 +72,12 @@ const siteUrl = await new Promise((res, rej) => {
 
 // --- le navigateur ---
 const CDP = 19000 + Math.floor(Math.random() * 1000);
-chrome = spawn(chromium(), ['--headless=new', `--remote-debugging-port=${CDP}`, `--user-data-dir=${join(work, 'profile')}`, '--no-first-run',
+const browser = chromium();
+console.log('navigateur :', browser);
+chrome = spawn(browser, ['--headless=new', `--remote-debugging-port=${CDP}`, `--user-data-dir=${join(work, 'profile')}`, '--no-first-run',
   '--no-sandbox', '--window-size=1280,800', 'about:blank'], { stdio: 'ignore' });
 let targets;
-for (let i = 0; i < 80 && !targets; i++) { try { targets = await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json(); } catch { await sleep(250); } }
+for (let i = 0; i < 160 && !targets; i++) { try { targets = await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json(); } catch { await sleep(250); } }
 if (!targets) fail('Chromium ne répond pas');
 const ws = new WebSocket(targets.find(t => t.type === 'page').webSocketDebuggerUrl);
 await new Promise(r => ws.addEventListener('open', r));
