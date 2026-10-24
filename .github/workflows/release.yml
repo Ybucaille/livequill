@@ -1,0 +1,83 @@
+name: Release
+
+# Pushing a tag vX.Y.Z builds the wheel, the sdist and the single-file livequill.pyz, publishes them as a
+# GitHub release (install.sh downloads livequill.pyz from the latest one), then publishes to PyPI when the
+# repository variable PYPI_PUBLISH is "true" (trusted publishing: no token stored in the repository).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Tag matches the package version
+        run: |
+          version=$(python -c 'import livequill; print(livequill.__version__)')
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != version $version"; exit 1; }
+      - name: Build wheel, sdist and livequill.pyz
+        run: |
+          pip install build==1.3.0
+          python -m build
+          python scripts/build-pyz.py --out dist/livequill.pyz
+          (cd dist && sha256sum livequill.pyz > livequill.pyz.sha256 && sha256sum * > SHA256SUMS)
+          cat dist/SHA256SUMS
+      - name: Smoke test the archive
+        run: python dist/livequill.pyz --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  github:
+    name: GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Create the release with its assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "LiveQuill $GITHUB_REF_NAME" --generate-notes
+          fi
+
+  pypi:
+    name: PyPI
+    needs: build
+    if: vars.PYPI_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: pypi
+      url: https://pypi.org/project/livequill/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Keep only the wheel and the sdist
+        run: find dist -type f ! -name '*.whl' ! -name '*.tar.gz' -delete
+      - uses: pypa/gh-action-pypi-publish@release/v1
