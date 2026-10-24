@@ -55,10 +55,15 @@ jobs:
       - name: Syntax check (overlay, setup, dashboard, showcase)
         run: node scripts/check-js.mjs
       - run: node --check scripts/record-demo.mjs
+      - run: node --check tests/e2e/browser.mjs
 
   package:
-    name: Package & smoke test
-    runs-on: ubuntu-latest
+    name: Package & smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -80,6 +85,25 @@ jobs:
           curl -fs http://127.0.0.1:8777/__setup | grep -q 'lq-token'
           curl -fs http://127.0.0.1:8777/__lq/overlay.js >/dev/null
           test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: evil.example' http://127.0.0.1:8777/__setup)" = 403
+
+  e2e:
+    name: Browser e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Edit → reload → undo in headless Chrome
+        run: node tests/e2e/browser.mjs
 
   secrets:
     name: Secret scan
@@ -104,7 +128,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [test, lint, js, package, secrets]
+    needs: [test, lint, js, package, e2e, secrets]
     runs-on: ubuntu-latest
     steps:
       - name: All jobs succeeded
