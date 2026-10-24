@@ -6,7 +6,7 @@ from . import adapters, agent
 from .adapters.cli import AGENTS as CLI_AGENTS, locate as locate_cli
 from .config import Config, redact
 from .net import Transport
-from .sandbox import DENY_DIRS, Conversation, HistoryStore, Project, denied
+from .sandbox import DENY_DIRS, Conversation, HistoryStore, PathError, Project, denied
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 MAX_BODY = 80 * 1024 * 1024
@@ -681,6 +681,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         rel = urllib.parse.unquote(u.path)
         parts = [x for x in rel.split('/') if x]
         if denied(parts) or any(x in DENY_DIRS for x in parts):
+            return self.send_error(404)
+        try:   # même vérification que les outils : un lien vers l'extérieur ou vers un fichier interdit n'est pas servi
+            self.app.project.resolve('/'.join(parts), allow_root=True)
+        except PathError:
             return self.send_error(404)
         path = self.translate_path(u.path)
         if os.path.isdir(path):

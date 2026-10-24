@@ -45,6 +45,17 @@ Rules:
 - Never reformat or rewrite unrelated code. Do not ask for confirmation: act, then stop.
 - When finished, answer in one or two short sentences, in the user's language, saying what you changed. If you could not do it, say why."""
 
+# Les agents CLI ont leurs propres outils (Claude Code : Read/Edit ; Codex : le shell de sa sandbox) : on ne leur
+# décrit pas ceux de la boucle API, seulement le cadre.
+CLI_SYSTEM = """You are a web development agent inside a live-edit tool. The user is looking at their website in a browser and asks for changes in plain language. Edit the project's source files in the current directory with your own tools; the page reloads by itself when you are done.
+
+Rules:
+- Only read and modify files inside the current directory. Never touch .git/, node_modules/ or .env* files.
+- Do not install packages, start servers or use the network.
+- Make the smallest change that does what was asked. Never reformat or rewrite unrelated code. Do not ask for confirmation: act, then stop.
+- Attachments are files you can read at the paths given.
+- When finished, answer in one or two short sentences, in the user's language, saying what you changed."""
+
 TEXT_PROTOCOL = """
 
 You cannot call functions natively, so use this text protocol. To call a tool, write a fenced block and then STOP your message:
@@ -141,13 +152,9 @@ class Toolbox:
                 a = next((a for a in self.att if a['name'] == args.get('name')), None)
                 if not a:
                     return f'Error: no attachment named {args.get("name")!r}. Available: {[a["name"] for a in self.att]}', True
-                full = self.p.resolve(args['path'])
-                self.tx.backup(full)
-                os.makedirs(os.path.dirname(full), exist_ok=True)
-                with open(full, 'wb') as f:
-                    f.write(a['bytes'])
+                out = self.p.write_bytes(args['path'], a['bytes'], tx=self.tx)
                 self.emit({'type': 'file', 'path': args['path'], 'action': 'write'})
-                return f'Copié : {args["path"]}', False
+                return out, False
             return f'Error: unknown tool {name!r}', True
         except KeyError as e:
             return f'Error: missing argument {e}', True
@@ -283,8 +290,8 @@ def run_cli(ctx, job, ad, model, opts, atts, tx):
     hist = history_messages(ctx.conversation.load(), 5)
     if hist:
         prompt = 'Earlier in this session:\n' + '\n'.join(f'{m["role"]}: {text_of(m["content"])}' for m in hist) + '\n\n' + prompt
-    prompt = SYSTEM + '\n\nRun no shell commands. Attachments are image/text files you can read at the paths given.\n\n' + prompt
-    snap = Snapshot(project)
+    prompt = CLI_SYSTEM + '\n\n' + prompt
+    snap = Snapshot(project)     # refuse (SnapshotTooLarge) avant de lancer l'agent si l'annulation ne peut pas être garantie
     try:
         def emit(ev):    # chemins affichés relatifs au projet
             for k in ('summary', 'path'):
@@ -293,8 +300,11 @@ def run_cli(ctx, job, ad, model, opts, atts, tx):
             job.emit(ev)
         answer = ad.run(job, project.root, prompt, model, opts, [a['path'] for a in atts if a['mime'].startswith('image/')], emit)
     finally:
-        for f in snap.record_changes(tx):
-            job.emit({'type': 'file', 'path': f, 'action': 'edit'})
+        try:
+            for f in snap.record_changes(tx):
+                job.emit({'type': 'file', 'path': f, 'action': 'edit'})
+        finally:
+            snap.close()
     return answer
 
 

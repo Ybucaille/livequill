@@ -1,5 +1,6 @@
 """Conversion des requêtes et lecture des flux, par adaptateur. Réseau simulé."""
-import json, unittest
+import json, os, unittest
+from unittest import mock
 
 from helpers import FakeTransport, sse_lines
 
@@ -187,7 +188,8 @@ class CLI(unittest.TestCase):
         self.assertIn('acceptEdits', argv)
         self.assertIn('Bash', argv[argv.index('--disallowedTools'):argv.index('--allowedTools')])
         self.assertEqual(argv[argv.index('--model') + 1], 'haiku')
-        argv = CLIAdapter({'command': 'codex'}).command('/p', 'default', {'effort': 'high'}, ['/p/a.png'])
+        with mock.patch.dict(os.environ, {'CODEX_HOME': '/nonexistent'}):     # pas de config Codex : pas de modèle imposé
+            argv = CLIAdapter({'command': 'codex'}).command('/p', 'default', {'effort': 'high'}, ['/p/a.png'])
         self.assertNotIn('--model', argv)
         self.assertEqual(argv[-2:], ['--image', '/p/a.png'])
         self.assertIn('workspace-write', argv)

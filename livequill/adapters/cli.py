@@ -9,7 +9,7 @@ from .base import Adapter, levels
 AGENTS = {
     'claude': {'label': 'Claude Code', 'models': [('default', 'Par défaut (Claude Code)'), ('opus', 'Opus'), ('sonnet', 'Sonnet'), ('haiku', 'Haiku')],
                'effort': levels('low', 'medium', 'high', 'xhigh', 'max')},
-    'codex': {'label': 'Codex', 'models': [('default', 'Par défaut (config Codex)')], 'effort': levels('low', 'medium', 'high')},
+    'codex': {'label': 'Codex', 'models': [('default', 'Par défaut (Codex)')], 'effort': levels('low', 'medium', 'high')},
     'gemini': {'label': 'Gemini CLI', 'models': [('default', 'Par défaut (Gemini CLI)')], 'effort': None},
 }
 
@@ -67,6 +67,22 @@ def detect_via():
     return {name: locate(name)[1] for name in AGENTS}
 
 
+def codex_user_model():
+    """Le modèle de premier niveau de ~/.codex/config.toml (seule valeur reprise de la config ignorée)."""
+    path = os.path.join(os.environ.get('CODEX_HOME') or os.path.expanduser('~/.codex'), 'config.toml')
+    try:
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                if line.lstrip().startswith('['):
+                    break                       # fin des clés de premier niveau
+                m = re.match(r'\s*model\s*=\s*"([^"]+)"', line)
+                if m:
+                    return m.group(1)
+    except OSError:
+        pass
+    return None
+
+
 def logged_in(name, exe):
     """True / False si l'agent sait le dire, None sinon (vieille version, commande inconnue)."""
     try:
@@ -117,10 +133,12 @@ class CLIAdapter(Adapter):
         m = None if model in (None, '', 'default') else model
         e = opts.get('effort')
         if self.agent == 'claude':
-            # Pas de Bash ni d'accès web : l'agent ne fait que lire et éditer des fichiers
+            # --restricted : outils de fichiers confinés au dossier du projet, aucun outil qui exécute du code,
+            # réglages utilisateur/projet ignorés (hooks compris) ; --strict-mcp-config : aucun serveur MCP de l'utilisateur
             argv = [exe, '-p', '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
+                    '--restricted', '--strict-mcp-config', '--tools', 'Read,Edit,Write,Glob,Grep',
                     '--permission-mode', 'acceptEdits', '--no-session-persistence',
-                    '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', 'Read(./.env*)', 'Edit(./.env*)',
+                    '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', 'Read(./.env*)', 'Edit(./.env*)', 'Write(./.env*)',
                     '--allowedTools', 'Read', 'Edit', 'Write', 'Glob', 'Grep']
             if m:
                 argv += ['--model', m]
@@ -128,7 +146,14 @@ class CLIAdapter(Adapter):
                 argv += ['--effort', e]
             return argv
         if self.agent == 'codex':
-            argv = [exe, 'exec', '--json', '--sandbox', 'workspace-write', '--cd', root, '--skip-git-repo-check', '--ephemeral']
+            # --ignore-user-config : ni les serveurs MCP ni les dossiers inscriptibles ajoutés dans ~/.codex/config.toml
+            # (un serveur MCP tourne hors de la sandbox) ; la connexion au compte reste celle de CODEX_HOME
+            # Sans la config utilisateur, on fixe nous-mêmes : jamais d'approbation demandée (impossible en non
+            # interactif ; les commandes restent dans la sandbox) et pas de réseau.
+            argv = [exe, 'exec', '--json', '--sandbox', 'workspace-write', '--ignore-user-config',
+                    '-c', 'approval_policy="never"', '-c', 'sandbox_workspace_write.network_access=false',
+                    '--cd', root, '--skip-git-repo-check', '--ephemeral']
+            m = m or codex_user_model()          # « Par défaut » garde le modèle choisi dans ~/.codex/config.toml
             if m:
                 argv += ['--model', m]
             if e:
