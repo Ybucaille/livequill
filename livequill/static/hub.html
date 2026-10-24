@@ -235,7 +235,8 @@
   function closeMenu() {
     if (!menu) return;
     if (menu.anchor) menu.anchor.setAttribute('aria-expanded', 'false');
-    menu.el.remove(); menu = null;
+    const el = menu.el; menu = null;
+    el.classList.add('closing'); setTimeout(() => el.remove(), 120);
   }
   function showMenu(id, x, y, anchor) {
     const s = sites.find(v => v.id === id); if (!s) return;

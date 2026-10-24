@@ -58,10 +58,12 @@
     const i = stack.findIndex(m => m.overlay === overlay);
     if (i < 0) return;
     const [m] = stack.splice(i, 1);
-    overlay.classList.remove('open');
+    // fondu de sortie, puis fermeture (immédiate si l'utilisateur réduit les animations)
+    const end = () => { overlay.classList.remove('open', 'closing'); if (m.onClose) m.onClose(); };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) end();
+    else { overlay.classList.add('closing'); setTimeout(end, 160); }
     if (!stack.length) document.body.style.overflow = '';
     if (m.focus && document.contains(m.focus)) m.focus.focus();
-    if (m.onClose) m.onClose();
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length) { e.preventDefault(); closeModal(stack[stack.length - 1].overlay); } });
   document.addEventListener('mousedown', e => { if (stack.length && e.target === stack[stack.length - 1].overlay) closeModal(e.target); });
@@ -74,7 +76,11 @@
       <div class="lang-menu" role="menu" hidden>${LANGS.map(l => `<button type="button" role="menuitemradio" aria-checked="${l.code === LANG}" data-lang="${esc(l.code)}">${esc(l.name)}${l.code === LANG ? '<span class="ck">✓</span>' : ''}</button>`).join('')}
         <div class="soon">${esc(t('More languages are coming.'))}</div></div>`;
     const btn = host.querySelector('.pill'), menu = host.querySelector('.lang-menu');
-    const show = on => { menu.hidden = !on; btn.setAttribute('aria-expanded', on); };
+    const show = on => {
+      btn.setAttribute('aria-expanded', on);
+      if (on) { menu.classList.remove('closing'); menu.hidden = false; }
+      else if (!menu.hidden) { menu.classList.add('closing'); setTimeout(() => { menu.hidden = true; menu.classList.remove('closing'); }, 120); }
+    };
     btn.addEventListener('click', () => show(menu.hidden));
     document.addEventListener('click', e => { if (!host.contains(e.target)) show(false); });
     host.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { e.stopPropagation(); show(false); btn.focus(); } });
