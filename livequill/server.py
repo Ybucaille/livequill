@@ -1,6 +1,7 @@
 """Serveur : sert le site (dossier ou proxy), y ajoute la barre à la volée, et expose l'API /__lq/."""
 import hmac, http.client, http.server, json, mimetypes, os, re, secrets, socket, socketserver, threading, time, traceback
 import urllib.parse
+from importlib import resources
 
 from . import adapters, agent
 from .adapters.cli import AGENTS as CLI_AGENTS, locate as locate_cli
@@ -13,6 +14,11 @@ MAX_BODY = 80 * 1024 * 1024
 HOP = {'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers', 'transfer-encoding', 'upgrade'}
 BODY_END = re.compile(rb'</body\s*>', re.I)
 HTML_END = re.compile(rb'</html\s*>', re.I)
+
+
+def asset(name):
+    """Fichier de livequill/static/, lu via importlib.resources pour fonctionner aussi depuis l'archive livequill.pyz."""
+    return resources.files(__package__).joinpath('static', name).read_bytes()
 
 
 def inject(html, token):
@@ -529,8 +535,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Location', '/__setup?next=%2F')
             self.end_headers()
             return
-        with open(os.path.join(STATIC, 'hub.html'), 'rb') as f:
-            html = f.read().replace(b'__LQ_TOKEN__', self.app.token.encode())
+        html = asset('hub.html').replace(b'__LQ_TOKEN__', self.app.token.encode())
         return self.send_bytes(html, 'text/html; charset=utf-8',
                                extra={'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'",
                                       'Referrer-Policy': 'no-referrer'})
@@ -543,11 +548,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         app, q = self.app, urllib.parse.parse_qs(u.query)
         p = u.path
         if p == '/__lq/overlay.js' and method == 'GET':
-            with open(os.path.join(STATIC, 'overlay.js'), 'rb') as f:
-                return self.send_bytes(f.read(), 'text/javascript; charset=utf-8')
+            return self.send_bytes(asset('overlay.js'), 'text/javascript; charset=utf-8')
         if p in ('/__setup', '/__lq/setup') and method == 'GET':
-            with open(os.path.join(STATIC, 'setup.html'), 'rb') as f:
-                html = f.read().replace(b'__LQ_TOKEN__', app.token.encode())
+            html = asset('setup.html').replace(b'__LQ_TOKEN__', app.token.encode())
             return self.send_bytes(html, 'text/html; charset=utf-8',
                                    extra={'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'",
                                           'Referrer-Policy': 'no-referrer'})

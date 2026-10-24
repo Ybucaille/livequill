@@ -3,7 +3,7 @@ name: Showcase site
 on:
   push:
     branches: [main]
-    paths: [site/**, docs/**, .github/workflows/pages.yml]
+    paths: [site/**, docs/**, install.sh, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -20,12 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Assemble the site (page + demo video + screenshots)
+      - name: Assemble the site (page + demo video + screenshots + installer)
         run: |
           mkdir -p _site/assets
           cp -r site/. _site/
           cp docs/demo.mp4 _site/assets/
           cp -r docs/images _site/assets/images
+          cp install.sh _site/install.sh
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:

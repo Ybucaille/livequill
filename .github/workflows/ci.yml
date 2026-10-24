@@ -41,7 +41,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff==0.14.0
-      - run: ruff check livequill tests bin/livequill
+      - run: ruff check livequill tests bin/livequill scripts/build-pyz.py
+      - name: Shell scripts (shellcheck)
+        run: shellcheck install.sh scripts/test-install.sh
 
   js:
     name: Browser code
@@ -85,6 +87,33 @@ jobs:
           curl -fs http://127.0.0.1:8777/__setup | grep -q 'lq-token'
           curl -fs http://127.0.0.1:8777/__lq/overlay.js >/dev/null
           test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: evil.example' http://127.0.0.1:8777/__setup)" = 403
+      - name: Install with install.sh and start the server (single-file archive)
+        run: scripts/test-install.sh --host
+
+  install:
+    name: install.sh on ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { image: "ubuntu:22.04", python: "apt-get update -qq && apt-get install -y -qq python3" }
+          - { image: "ubuntu:24.04", python: "apt-get update -qq && apt-get install -y -qq python3 curl" }
+          - { image: "debian:12", python: "apt-get update -qq && apt-get install -y -qq python3" }
+          - { image: "fedora:latest", python: "dnf install -y -q python3" }
+          - { image: "rockylinux:9", python: "dnf install -y -q python3.12" }
+          - { image: "archlinux:latest", python: "pacman -Sy --noconfirm python" }
+          - { image: "alpine:latest", python: "apk add -q python3" }
+          - { image: "opensuse/tumbleweed", python: "zypper -n -q in python3" }
+          - { image: "opensuse/leap:15.6", python: "zypper -n -q in python311" }
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Python with the distro's package manager, then LiveQuill with install.sh
+        run: scripts/test-install.sh "${{ matrix.image }}" "${{ matrix.python }}"
+      - name: Without Python, the installer explains what to install
+        if: matrix.image == 'debian:12'
+        run: scripts/test-install.sh debian:12 --no-python 'apt install'
 
   e2e:
     name: Browser e2e (${{ matrix.os }})
@@ -128,7 +157,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [test, lint, js, package, e2e, secrets]
+    needs: [test, lint, js, package, install, e2e, secrets]
     runs-on: ubuntu-latest
     steps:
       - name: All jobs succeeded
