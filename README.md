@@ -24,7 +24,8 @@ A floating prompt bar for any local site: type a change, the model of your choic
 
 - **Ask, don't dig.** Describe the change on the page you are looking at. The model finds the code, edits it, and the page reloads.
 - **Any model.** Claude, GPT, Gemini, Mistral, OpenRouter, local models through Ollama, LM Studio or llama.cpp, any OpenAI-compatible server, or the Claude Code, Codex and Gemini CLIs you already use. No CLI? The agent built into the **Claude Desktop** or **ChatGPT** app works too.
-- **All your sites in one place.** A dashboard lists your projects. Each one is served as-is or behind your dev server (Vite, Next, Astro…).
+- **A new site in a minute.** A short wizard creates a site from a ready-made template or a blank page, no technical skills needed. Or add a folder you already have.
+- **All your sites in one place.** A dashboard lists your projects with a live thumbnail. Each one is served as-is or behind your dev server (Vite, Next, Astro…).
 - **Safe by default.** Sandboxed file tools, a backup before every edit, one-click **Undo**, and API keys that never reach the browser.
 - **Every request is a version.** Browse them in the bar, preview any of them live without touching your files, and go back to it in one click.
 - **Nothing to install in your project.** The bar is added while pages are served, never written to disk. **Zero dependencies**: just Python.
@@ -53,8 +54,8 @@ The script installs a single file, `livequill.pyz` from the [latest release](htt
 
 Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal to stop it.
 
-1. **Setup.** The first launch opens the setup page. Pick a provider: paste an API key, or click a local model or CLI agent detected on your machine.
-2. **Add a site.** You land on **Mes sites** (the interface is in French for now). Add a project folder, or the URL of your running dev server.
+1. **Setup.** The first launch opens the setup page. Pick a provider: paste an API key, or click a local model or CLI agent detected on your machine. You only see this page once: later, providers are managed from the ⚙ settings of **My sites**.
+2. **Create a site.** You land on **My sites**. Click **New site**: pick a starting point (a business website template or a blank page), give it a name, and LiveQuill creates it in `~/LiveQuill/sites`. Already have a site? Choose **Add an existing site** and select its folder.
 3. **Open it and ask.** The site opens with the floating bar. Try *“make the hero title red”*, watch it change, then click **Undo**.
 
 Handy shortcuts:
@@ -81,20 +82,26 @@ livequill --proxy http://localhost:5173 ~/projects/app   # same, behind your dev
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/hub.jpg" alt="Mes sites dashboard"></td>
+<td width="50%"><img src="docs/images/hub.jpg" alt="My sites dashboard"></td>
 <td width="50%"><img src="docs/images/setup.jpg" alt="Provider setup page"></td>
 </tr>
 <tr>
-<td><b>Mes sites.</b> Add, edit, open or stop each project. Every site runs on its own port, with its own history.</td>
+<td><b>My sites.</b> Create, add, open or stop each project, with a live thumbnail. Every site runs on its own port, with its own history.</td>
 <td><b>Setup.</b> Each provider shows <b>Available</b> (connection checked live), <b>Detected</b> (one click away), or a link to get a key.</td>
 </tr>
 <tr>
+<td><img src="docs/images/wizard.jpg" alt="New site wizard"></td>
 <td><img src="docs/images/hero.jpg" alt="Floating bar with the live answer"></td>
-<td><img src="docs/images/themes.png" alt="Claude, ChatGPT, Gemini and Minimal themes"></td>
 </tr>
 <tr>
+<td><b>New site.</b> A short wizard: kind of site, starting point with a live preview, name and folder. Built for people who never made a website.</td>
 <td><b>Live panel.</b> The answer streams in, with the tools called and the files changed. It survives the reload.</td>
-<td><b>Themes.</b> Claude, ChatGPT, Gemini and Minimal, in light and dark, following your system.</td>
+</tr>
+<tr>
+<td colspan="2"><img src="docs/images/themes.png" alt="Claude, ChatGPT, Gemini and Minimal themes"></td>
+</tr>
+<tr>
+<td colspan="2"><b>Themes.</b> Claude, ChatGPT, Gemini and Minimal, in light and dark, following your system.</td>
 </tr>
 </table>
 
@@ -129,7 +136,7 @@ livequill --proxy http://localhost:5173 ~/projects/app   # same, behind your dev
 
 ### Desktop apps, no CLI needed
 
-The **Claude Desktop** app ships with its own copy of Claude Code, and the **ChatGPT** app (and the Codex app on macOS) ships with Codex. If the CLI is not installed, LiveQuill uses the agent built into the app, with the account you are already signed in with. The setup page shows it as *“Trouvé dans l’app Claude Desktop”*, the connection test checks that you are signed in, and the newest version is picked every time the app updates itself.
+The **Claude Desktop** app ships with its own copy of Claude Code, and the **ChatGPT** app (and the Codex app on macOS) ships with Codex. If the CLI is not installed, LiveQuill uses the agent built into the app, with the account you are already signed in with. The setup page shows it as *“Found in the Claude Desktop app”*, the connection test checks that you are signed in, and the newest version is picked every time the app updates itself.
 
 | App | Where LiveQuill looks |
 |---|---|
@@ -218,7 +225,8 @@ Register it in `KINDS` (`livequill/adapters/__init__.py`), and the setup page an
 
 ### Planned
 
-- **Dynamic sites with a mock database.** Support for sites with a backend and a database, plugged into a disposable mock database seeded with demo data, so the model can work on data-driven pages without ever touching real data.
+- **Dynamic sites with a mock database.** Support for sites with a backend and a database, plugged into a disposable mock database seeded with demo data, so the model can work on data-driven pages without ever touching real data. The new-site wizard already shows the option, greyed out until it lands.
+- **More templates and languages.** More starting points in the new-site wizard (portfolio, event, restaurant…), and more interface languages through the language menu.
 
 ### Ideas
 
@@ -247,7 +255,7 @@ Yes. Keep your dev server running and add the site with its URL (or run `livequi
 
 ### What if the model breaks something?
 
-Click **Undo** in the bar. The files changed by the last request are restored from the backup taken just before the edit, and you can undo several requests in a row. To go further back, open **Versions** (the clock button), preview the version you want, and click **Revenir à cette version**.
+Click **Undo** in the bar. The files changed by the last request are restored from the backup taken just before the edit, and you can undo several requests in a row. To go further back, open **Versions** (the clock button), preview the version you want, and click **Go back to this version**.
 
 ### Where is my data stored, and how do I uninstall?
 
@@ -263,7 +271,7 @@ A 7B model or larger that supports tool calls, such as `qwen2.5:7b-instruct`, `q
 
 ## Contributing
 
-Contributions are welcome: adapters, themes, roadmap items, fixes and translations (the interface is currently in French). Start with [CONTRIBUTING.md](CONTRIBUTING.md). Every pull request runs the full CI (tests on Linux and macOS for Python 3.10 to 3.14, lint, secret scan, CodeQL) and is reviewed by the maintainer before merging.
+Contributions are welcome: adapters, themes, roadmap items, fixes and translations (the interface is in English; a new language is one JSON file, see CONTRIBUTING). Start with [CONTRIBUTING.md](CONTRIBUTING.md). Every pull request runs the full CI (tests on Linux and macOS for Python 3.10 to 3.14, lint, secret scan, CodeQL) and is reviewed by the maintainer before merging.
 
 ```bash
 python3 -m unittest discover -s tests     # about 8 s, no network

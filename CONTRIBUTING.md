@@ -15,7 +15,7 @@ Thanks for taking the time to contribute! Bug reports, new provider adapters, th
 git clone https://github.com/Ybucaille/livequill.git
 cd livequill
 python3 -m unittest discover -s tests
-node tests/e2e/browser.mjs        # parcours navigateur réel (Chrome/Chromium requis)
+node tests/e2e/browser.mjs        # real browser run (needs Chrome or Chromium)
 ./bin/livequill          # dashboard; add any local project as a site
 ```
 
@@ -40,6 +40,20 @@ Releases are automated: bump `version` in `pyproject.toml` and `livequill/__init
 ### A new theme
 
 Add an entry to `THEMES` in `livequill/static/overlay.js`. Each entry has a `shape` (font, radius, sizes) and a `dark` and a `light` color set. It shows up in the palette menu automatically.
+
+### A new language
+
+The interface is written in English, and every visible text goes through `t()` (pages) or `tr()` (the bar). To add a language, create `livequill/static/i18n/<code>.json`, for example `fr.json`. It maps each English text to its translation, plus a `_name` key with the language's own name:
+
+```json
+{ "_name": "Français", "My sites": "Mes sites", "New site": "Nouveau site", "{n} file(s)": "{n} fichier(s)" }
+```
+
+Keep the `{placeholders}` as they are. Missing texts fall back to English. The language then appears in the language menu of the setup page and of **My sites**.
+
+### A new site template
+
+Add a folder to `livequill/templates/` with an `index.html` and its files, then register it in `TEMPLATES` (`livequill/scaffold.py`) with a name and a one-line description. `{{SITE_NAME}}` and `{{YEAR}}` are replaced when a site is created. Keep templates dependency-free (no build step, no CDN), so a beginner can open the folder and understand it.
 
 ## Pull requests
 

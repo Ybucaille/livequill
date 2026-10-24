@@ -43,7 +43,6 @@
   .sub{max-width:620px;margin:0 auto 40px;color:var(--soft);text-align:center}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .grid.two{grid-template-columns:1fr 1fr;max-width:820px;margin:0 auto}
-  .grid.one{grid-template-columns:1fr;max-width:460px;margin:0 auto}
   .f{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
   .f .i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);margin-bottom:12px}
   .f .i svg{width:20px;height:20px}
@@ -105,7 +104,7 @@
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16M6 16l9-9 3 3-9 9H6z"/></svg></div><h3>Real file edits</h3><p>The model searches, reads and edits the project with sandboxed tools, then the page reloads on its own.</p></div>
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><h3>Undo and versions</h3><p>Every file is backed up before it is touched. Undo the last request, or preview any earlier version live and go back to it in one click.</p></div>
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div><h3>Live answers</h3><p>The panel streams what the model says, the tools it calls and the files it changes.</p></div>
-      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg></div><h3>All your sites</h3><p>A dashboard lists your projects. Serve a folder as-is, or sit in front of Vite, Next or Astro.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg></div><h3>All your sites</h3><p>Create a site from a template in a short wizard, or add a folder you have. Served as-is, or in front of Vite, Next or Astro.</p></div>
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 0 1 0 18M3 12h18"/></svg></div><h3>Any model</h3><p>Switch between cloud APIs, local models and CLI agents from the same menu, without restarting.</p></div>
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-1.7a1.8 1.8 0 0 0-1.3 3.1A1.6 1.6 0 0 1 12 22z"/></svg></div><h3>Looks like home</h3><p>Claude, ChatGPT, Gemini and Minimal themes, in light and dark, following your system.</p></div>
     </div>
@@ -113,7 +112,7 @@
 
   <section><div class="wrap">
     <div class="shots">
-      <figure><img src="assets/images/hub.jpg" alt="Sites dashboard" loading="lazy"><figcaption><b>Your sites.</b> Add a project folder once, open it with the bar whenever you need it.</figcaption></figure>
+      <figure><img src="assets/images/hub.jpg" alt="Sites dashboard" loading="lazy"><figcaption><b>Your sites.</b> Create a site from a template or add a folder you have, then open it with the bar whenever you need it.</figcaption></figure>
       <figure><img src="assets/images/setup.jpg" alt="Provider setup page" loading="lazy"><figcaption><b>Setup in a minute.</b> Detected providers are one click away, and each connection is checked live.</figcaption></figure>
       <figure><img src="assets/images/models.png" alt="Model menu grouped by provider" loading="lazy"><figcaption><b>Every model in one menu.</b> Reasoning and Fast only show up when the model supports them.</figcaption></figure>
       <figure><img src="assets/images/themes.png" alt="Bar themes" loading="lazy"><figcaption><b>Four themes.</b> Pick the one that feels like the assistant you already use.</figcaption></figure>
@@ -133,8 +132,9 @@
   <section id="roadmap"><div class="wrap">
     <h2>Coming next</h2>
     <p class="sub">Here is what is planned next. Follow the repository to see it land.</p>
-    <div class="grid one">
+    <div class="grid two">
       <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></div><h3>Dynamic sites, mock database</h3><p>Sites with a backend, plugged into a disposable database seeded with demo data, so the model edits data-driven pages without touching real data.</p></div>
+      <div class="f"><div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div><h3>More templates and languages</h3><p>More starting points in the new-site wizard, and more interface languages, picked from the language menu.</p></div>
     </div>
   </div></section>
 
@@ -145,7 +145,7 @@
       <ol class="steps">
         <li><b>Install and run.</b> The first launch opens the setup page in your browser.</li>
         <li><b>Pick a provider.</b> Paste an API key, or use Ollama or a CLI agent detected on your machine.</li>
-        <li><b>Add a site.</b> Choose a project folder, or the URL of your dev server.</li>
+        <li><b>Create a site.</b> Start from a template or a blank page in a short wizard, or add a folder you already have.</li>
         <li><b>Open it and ask.</b> “Make the hero title red.” Watch it change, undo if you don’t like it.</li>
       </ol>
       <pre id="code"><button class="copy" type="button">Copy</button><span class="c"># install (Linux, macOS)</span>
