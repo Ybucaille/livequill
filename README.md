@@ -13,9 +13,9 @@ A floating prompt bar for any local site: type a change, the model of your choic
 
 [**Website**](https://ybucaille.github.io/livequill/) · [Install](#install) · [Models](#models) · [FAQ](#faq)
 
-<a href="https://ybucaille.github.io/livequill/"><img src="docs/demo.gif" alt="LiveQuill demo: first launch, a provider is set up, a site is created from the business template and opened, a request turns the title red, the original version is previewed, then Undo restores it" width="860"></a>
+<a href="https://ybucaille.github.io/livequill/"><img src="docs/demo.gif" alt="LiveQuill demo: first launch, a provider is set up, a portfolio site is created from a template, a request adds a smooth scroll engine with Lenis and GSAP, a second request changes the background, the original version is previewed, then Undo restores it" width="860"></a>
 
-<sub>A real, unedited first run with Claude Code (Haiku). <a href="docs/demo.mp4">MP4 version</a>.</sub>
+<sub>A real, unedited first run with Claude Code (Sonnet): a portfolio from a template, then <i>“add a smooth scrolling engine with Lenis and GSAP”</i> and a quick color change. <a href="docs/demo.mp4">MP4 version</a>.</sub>
 
 </div>
 
@@ -65,7 +65,7 @@ livequill
 ```
 
 1. **Choose a model.** The first launch opens the setup page. Click a model detected on your computer, or paste an API key.
-2. **Create a site.** On **My sites**, click **New site**, pick a template, give it a name. Or add a site you already have.
+2. **Create a site.** On **My sites**, click **New site**, pick a starting point (blank page, business website or portfolio), give it a name. Or add a site you already have.
 3. **Ask.** The site opens with the floating bar. Try *“make the hero title red”*, watch it change, then click **Undo**.
 
 <details>

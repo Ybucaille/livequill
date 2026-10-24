@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{SITE_NAME}}</title>
+  <meta name="description" content="{{SITE_NAME}}: selected work, about and contact.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="#top">{{SITE_NAME}}</a>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <p class="eyebrow">Designer &amp; developer</p>
+      <h1>I design calm, useful things for the web.</h1>
+      <p class="lead">Hi, I’m {{SITE_NAME}}. I help small teams turn ideas into products people enjoy using.</p>
+      <a class="button" href="#work">See my work</a>
+    </section>
+
+    <section id="work" class="section">
+      <h2>Selected work</h2>
+      <div class="projects">
+        <article class="project">
+          <div class="cover c1"></div>
+          <h3>Northwind</h3>
+          <p>Brand and website for a sailing school. Identity, booking flow, launch.</p>
+        </article>
+        <article class="project">
+          <div class="cover c2"></div>
+          <h3>Fieldnotes</h3>
+          <p>A note-taking app for researchers working offline in the field.</p>
+        </article>
+        <article class="project">
+          <div class="cover c3"></div>
+          <h3>Atelier Rose</h3>
+          <p>Online shop for an independent ceramics studio, from photos to checkout.</p>
+        </article>
+        <article class="project">
+          <div class="cover c4"></div>
+          <h3>Pulse</h3>
+          <p>Dashboard for a community health program, built to be read in seconds.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="about" class="section split">
+      <h2>About</h2>
+      <div>
+        <p>I have spent ten years between design studios and product teams. I like simple interfaces, honest copy and fast pages.</p>
+        <p>Today I work independently, with a few clients at a time, from the first sketch to the last pixel.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What I do</h2>
+      <ul class="services">
+        <li><strong>Brand identity</strong><span>Logos, colors, type, and the rules that hold them together.</span></li>
+        <li><strong>Websites</strong><span>Fast, accessible sites that are easy to update.</span></li>
+        <li><strong>Product design</strong><span>Research, flows and prototypes for web and mobile apps.</span></li>
+      </ul>
+    </section>
+
+    <section id="contact" class="section contact">
+      <h2>Let’s work together</h2>
+      <p class="lead">Tell me about your project. I usually reply within two days.</p>
+      <a class="button" href="mailto:hello@example.com">hello@example.com</a>
+    </section>
+  </main>
+
+  <footer class="footer">© {{YEAR}} {{SITE_NAME}}</footer>
+</body>
+</html>

@@ -17,10 +17,12 @@ import { fileURLToPath } from 'node:url';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const HOME = resolve(arg('home', tmpdir()));
-const SITE = arg('site', 'Acme Bakery');                 // name typed in the new-site wizard
+const SITE = arg('site', 'Nora Lind');                   // name typed in the new-site wizard
+const TEMPLATE = arg('template', 'portfolio');
 const PROVIDER = arg('provider', 'cli-claude');        // setup card to click
 const MODEL = arg('model', 'haiku');                    // model to make default
-const PROMPT = arg('prompt', 'make the hero title red');
+const PROMPT = arg('prompt', 'Add a smooth scrolling engine with Lenis and GSAP ScrollTrigger from a CDN: each section fades and slides in as you scroll, the hero title has a subtle parallax, and a thin progress bar at the top shows how far you have scrolled.');
+const PROMPT2 = arg('prompt2', 'make the background a deep navy blue');
 const OUT = resolve(arg('out', 'docs'));
 const SHOTS_ONLY = process.argv.includes('--shots-only');   // README screenshots only: no model call, no video
 const PORT = +arg('port', 8790), CDP = 9333, W = 1280, H = 800;
@@ -107,7 +109,27 @@ async function click(sel) {
   await sleep(140);
   await js(`document.getElementById('rec-cursor') && (document.getElementById('rec-cursor').style.transform = '')`);
 }
-async function type(text) { for (const ch of text) { await cdp('Input.insertText', { text: ch }); await sleep(45 + Math.random() * 45); } }
+async function type(text) { const d = text.length > 80 ? 12 : 45; for (const ch of text) { await cdp('Input.insertText', { text: ch }); await sleep(d + Math.random() * d); } }
+// Wheel scroll through the whole page, as a visitor would (scroll engines listen to wheel events), then back to the top
+async function scrollThrough() {
+  await point(W / 2, H / 2);
+  for (let i = 0; i < 220 && !(await js('scrollY + innerHeight >= document.documentElement.scrollHeight - 4')); i++) {
+    await cdp('Input.dispatchMouseEvent', { type: 'mouseWheel', x: W / 2, y: H / 2, deltaX: 0, deltaY: 55 }); await sleep(120);
+  }
+  await sleep(1500);
+  for (let i = 0; i < 60 && (await js('scrollY')) > 2; i++) { await cdp('Input.dispatchMouseEvent', { type: 'mouseWheel', x: W / 2, y: H / 2, deltaX: 0, deltaY: -400 }); await sleep(80); }
+  await sleep(1200);
+}
+async function ask(text) {
+  await click('bar:textarea');
+  await type(text);
+  await sleep(500);
+  await key('Enter', 'Enter', 13);
+  await sleep(1500);
+  for (let i = 0; i < 1200 && (await api(site, 'state')).running; i++) await sleep(500);
+  const l = waitLoad(8000); await l;
+  await sleep(900); await js(CURSOR); await cast(true);
+}
 const key = async (k, code = k, vk = 0) => { for (const t of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type: t, key: k, code, windowsVirtualKeyCode: vk }); };
 const base = `http://127.0.0.1:${PORT}`;
 const tokenOf = async url => (await (await fetch(new URL('/', url))).text()).match(/lq-token" content="([^"]+)|data-lq-token="([^"]+)/).slice(1).find(Boolean);
@@ -137,9 +159,9 @@ await l; await sleep(1200); await js(CURSOR); await cast(true);
 await click('[data-wizard=create]');
 await sleep(900);
 await click('#wz-foot [data-next]');                           // static site
-await waitFor('[data-choice=business] iframe');
+await waitFor(`[data-choice=${TEMPLATE}] iframe`);
 await sleep(1200);
-await click('[data-choice=business]');
+await click(`[data-choice=${TEMPLATE}]`);
 await sleep(500);
 await snap('wizard.jpg');
 await click('#wz-foot [data-next]');
@@ -156,17 +178,17 @@ await l; await sleep(1500); await js(CURSOR); await cast(true);
 const site = (await api(base, 'sites')).sites[0].url;
 
 if (!SHOTS_ONLY) {
-  // 3. Ask for a change, watch the live panel, the page reloads by itself
-  await click('bar:textarea');
-  await type(PROMPT);
-  await sleep(500);
-  await key('Enter', 'Enter', 13);
-  await sleep(1500);
-  for (let i = 0; i < 600 && (await api(site, 'state')).running; i++) await sleep(500);
-  l = waitLoad(8000); await l;
-  await sleep(900); await js(CURSOR); await cast(true);
-  await sleep(3200);
+  // 3. A real feature: a scroll engine, then scroll through the page to see it
+  await ask(PROMPT);
+  await sleep(2500);
   await snap('hero.jpg');
+  await click('bar:.histbtn');                                  // fold the panel to see the whole page
+  await sleep(600);
+  await scrollThrough();
+
+  // 3b. A quick, simple change
+  await ask(PROMPT2);
+  await sleep(2500);
 
   // 4. Versions: live preview of the site before the change, nothing restored
   await click('bar:[data-view=versions]');
@@ -209,7 +231,7 @@ for (const [skin, mode] of [['claude', 'dark'], ['chatgpt', 'light'], ['gemini',
   await js(`localStorage.setItem('livequill-prefs', JSON.stringify({ ...JSON.parse(localStorage.getItem('livequill-prefs') || '{}'), skin: '${skin}', mode: '${mode}' }));
     sessionStorage.setItem('livequill-ui', '{"panel":false}')`);
   l = waitLoad(); await cdp('Page.reload'); await l; await sleep(1200);
-  await js(`(() => { const t = document.getElementById('livequill').shadowRoot.querySelector('textarea'); t.value = ${JSON.stringify(PROMPT)}; t.dispatchEvent(new Event('input')); })()`);
+  await js(`(() => { const t = document.getElementById('livequill').shadowRoot.querySelector('textarea'); t.value = ${JSON.stringify(PROMPT2)}; t.dispatchEvent(new Event('input')); })()`);
   await sleep(400);
   const f = `theme-${skin}.png`; themes.push(join(OUT, 'images', f)); await snap(f, await barClip());
   if (skin === 'claude') {
@@ -234,7 +256,7 @@ if (!SHOTS_ONLY) {
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(work, 'list.txt'), '-vf', 'fps=30,format=yuv420p',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-movflags', '+faststart', join(OUT, 'demo.mp4')]);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(OUT, 'demo.mp4'), '-vf',
-    'fps=8,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', join(OUT, 'demo.gif')]);
+    'fps=6,scale=640:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=80:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', join(OUT, 'demo.gif')]);
 }
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...themes.flatMap(t => ['-i', t]), '-filter_complex',
   themes.map((_, i) => `[${i}]scale=720:-1,pad=720:ih:(ow-iw)/2[t${i}]`).join(';') + ';' + themes.map((_, i) => `[t${i}]`).join('') + `vstack=inputs=${themes.length}`,

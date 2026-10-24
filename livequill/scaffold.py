@@ -6,6 +6,7 @@ from importlib import resources
 TEMPLATES = {
     'blank': {'name': 'Blank page', 'description': 'A clean page with just the name of your site. Describe what you want, the model builds it.'},
     'business': {'name': 'Business website', 'description': 'A one-page company site with services, about and contact sections, ready to adapt.'},
+    'portfolio': {'name': 'Portfolio', 'description': 'A one-page personal portfolio: big intro, selected work, about and contact.'},
 }
 IGNORED = {'.DS_Store', 'Thumbs.db', '.livequill', 'desktop.ini'}
 
