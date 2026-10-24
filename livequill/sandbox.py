@@ -341,7 +341,8 @@ class HistoryStore:
         with self.lock:
             _private_dir(self.dir)
             # le nom porte les nanosecondes : l'ordre alphabétique reste l'ordre chronologique, même à la même seconde
-            d = _private_dir(os.path.join(self.dir, f'{time.strftime("%Y%m%d-%H%M%S")}-{time.time_ns() % 1_000_000_000:09d}-{tx.id}'))
+            ns = time.time_ns()     # une seule lecture de l'heure : secondes et nanosecondes restent cohérentes
+        d = _private_dir(os.path.join(self.dir, f'{time.strftime("%Y%m%d-%H%M%S", time.localtime(ns // 1_000_000_000))}-{ns % 1_000_000_000:09d}-{tx.id}'))
             files = _private_dir(os.path.join(d, 'files'))
             entries = []
             for i, rel in enumerate(tx.order):
