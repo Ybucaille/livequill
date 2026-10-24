@@ -58,7 +58,7 @@
   .welcome .ico svg{width:30px;height:30px}
 
   /* --- Assistant de création --- */
-  .wz-top{display:flex;gap:6px;margin-bottom:16px}
+  .wz-top{display:flex;gap:6px;margin:6px 46px 16px 0}   /* place laissée au bouton fermer */
   .wz-top i{height:5px;flex:1;border-radius:9px;background:var(--line2)}
   .wz-top i.on{background:var(--acc)}
   .wz-body{margin-top:18px;min-height:250px}
@@ -318,7 +318,7 @@
       ${opts.shot || `<span class="ico">${icon(ico)}</span>`}<b>${esc(title)}</b><small>${esc(text)}</small></button>`;
 
   function wizard(start) {
-    Object.assign(W, { kind: 'static', template: 'business', name: '', root: null, parent: null, fixedRoot: null, proxy: '' });
+    Object.assign(W, { kind: 'static', template: 'blank', name: '', root: null, parent: null, fixedRoot: null, proxy: '' });
     if (!W.el.classList.contains('open')) openModal(W.el);
     if (start === 'create') return showKind();
     if (start === 'existing') return chooseExisting();
