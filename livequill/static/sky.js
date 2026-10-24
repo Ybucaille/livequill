@@ -79,14 +79,13 @@
     gl.bindVertexArray(gl.createVertexArray());
     const U = k => gl.getUniformLocation(prog, k), uR = U('R'), uT = U('T'), uD = U('D'), uM = U('M');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, dark = matchMedia('(prefers-color-scheme: dark)');
-    let D = dark.matches ? 1 : 0, mx = 0, my = 0, px = 0, py = 0, last = 0, stopped = false;
+    let D = dark.matches ? 1 : 0, last = 0, stopped = false;
     const SCALE = 0.5;   // nuages flous : la demi-résolution suffit et divise le coût par quatre
     function resize() {
       canvas.width = Math.max(1, Math.round(innerWidth * SCALE)); canvas.height = Math.max(1, Math.round(innerHeight * SCALE));
       gl.viewport(0, 0, canvas.width, canvas.height);
     }
     addEventListener('resize', () => { resize(); if (reduced) draw(0, true); }, { passive: true });
-    addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = .5 - e.clientY / innerHeight; }, { passive: true });
     dark.addEventListener('change', () => { if (reduced) { D = dark.matches ? 1 : 0; draw(0, true); } });
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); stopped = true; sky.classList.remove('gl'); cssClouds(); }, { once: true });
     function draw(t, force) {
@@ -94,9 +93,8 @@
       if (force || (!document.hidden && (t - last > 33 || !last))) {
         last = t || 1;
         D += ((dark.matches ? 1 : 0) - D) * .06;          // transition douce si le système change de thème
-        px += (mx - px) * .04; py += (my - py) * .04;
         gl.uniform2f(uR, canvas.width, canvas.height); gl.uniform1f(uT, reduced ? 40 : t * .001 + 40);
-        gl.uniform1f(uD, D); gl.uniform2f(uM, px, py);
+        gl.uniform1f(uD, D); gl.uniform2f(uM, 0, 0);   // pas de parallaxe : le ciel ne suit pas la souris
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
       if (!reduced) requestAnimationFrame(draw);
